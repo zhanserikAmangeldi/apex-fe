@@ -1,4 +1,4 @@
-import {useCallback, useState} from "react";
+import {useCallback, useState, useEffect} from "react";
 import type {ApiError, AuthResponse, LoginRequest, RegisterRequest, User} from "../types";
 import {api} from "../services/api.ts";
 import { AuthContext } from "./AuthContext.tsx";
@@ -12,9 +12,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    useEffect(() => {
+        const token = localStorage.getItem('access_token');
+        console.log(token);
+        if (token) {
+            api.setAccessToken(token);
+        }
+
+        api.getProfile()
+            .then((user) => {
+                setUser(user);
+            })
+            .catch(() => {
+                localStorage.removeItem('access_token');
+                api.setAccessToken(null);
+                setUser(null);
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
+    }, []);
+
     const clearError = useCallback(() => setError(null), []);
 
     const handleAuthResponse = (response: AuthResponse) => {
+        localStorage.setItem('access_token', response.access_token);
         api.setAccessToken(response.access_token);
         setUser(response.user);
     };
@@ -50,6 +72,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
 
     const logout = () => {
+        localStorage.removeItem('access_token');
         api.setAccessToken(null);
         setUser(null);
     };
@@ -57,7 +80,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return (
         <AuthContext.Provider value={{
             user,
-            isAuthenticated: !!user,
+            isAuthenticated: !!localStorage.getItem('access_token') ,
             isLoading,
             login,
             register,

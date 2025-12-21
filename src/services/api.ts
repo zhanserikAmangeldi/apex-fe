@@ -7,7 +7,7 @@ import type {
     ApiError
 } from '../types';
 
-const API_BASE = 'http://localhost:8080/api/v1';
+const API_BASE = 'http://localhost:8000/api/';
 
 class ApiService {
     private baseUrl: string;
@@ -46,14 +46,14 @@ class ApiService {
     }
 
     async register(data: RegisterRequest): Promise<AuthResponse> {
-        return this.request<AuthResponse>('/auth/register', {
+        return this.request<AuthResponse>('auth-service/api/v1/auth/register', {
             method: 'POST',
             body: JSON.stringify(data),
         });
     }
 
     async login(data: LoginRequest): Promise<AuthResponse> {
-        return this.request<AuthResponse>('/auth/login', {
+        return this.request<AuthResponse>('auth-service/api/v1/auth/login', {
             method: 'POST',
             body: JSON.stringify(data),
         });
@@ -74,7 +74,7 @@ class ApiService {
     }
 
     async getProfile(): Promise<User> {
-        return this.request<User>('/user/profile');
+        return this.request<User>('auth-service/api/v1/users/me');
     }
 }
 

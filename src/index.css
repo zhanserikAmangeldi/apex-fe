@@ -1,5 +1,2 @@
 @import "tailwindcss";
-
-* {
-    outline: 1px solid red;
-}
+@import "./components/TiptapEditor.css";
