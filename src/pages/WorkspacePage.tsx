@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom';
 import { GradientButton } from '../components/ui/Button';
 import { GlassCard } from '../components/ui/GlassCard';
 import { useAuth } from '../hooks/UseAuth';
@@ -11,6 +11,7 @@ import { AttachmentManager } from '../components/AttachmentManager';
 import { FileTree } from '../components/FileTree';
 import { TagManager } from '../components/TagManager';
 import { TagDisplay } from '../components/TagDisplay';
+import { GraphView } from '../components/GraphView';
 import { editorApi } from '../services/editorApi';
 import { isPreviewableFile, getMimeType, isImageFile, isVideoFile, isPdfFile } from '../utils/fileIcons';
 import type { AppDocument, Vault } from '../types/editor';
@@ -19,6 +20,8 @@ import '../components/FileTree.css';
 export const WorkspacePage: React.FC = () => {
     const { vaultId } = useParams<{ vaultId: string }>();
     const navigate = useNavigate();
+    const location = useLocation();
+    const [searchParams] = useSearchParams();
     const { user } = useAuth();
     const editorRef = useRef<TiptapEditorRef>(null);
 
@@ -27,6 +30,7 @@ export const WorkspacePage: React.FC = () => {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [showShareModal, setShowShareModal] = useState(false);
     const [showTagManager, setShowTagManager] = useState(false);
+    const [showGraphView, setShowGraphView] = useState(false);
     const [tagRefreshKey, setTagRefreshKey] = useState(0);
     const [vault, setVault] = useState<Vault | null>(null);
     const [previewFile, setPreviewFile] = useState<{ url: string; filename: string; mimeType: string } | null>(null);
@@ -58,7 +62,6 @@ export const WorkspacePage: React.FC = () => {
         loadVault();
     }, [vaultId]);
 
-
     const stableColor = useMemo(() => {
         const colors = ['#958DF1', '#F98181', '#FBBC88', '#FAF594', '#70CFF8', '#94FADB', '#B9F18D'];
         return colors[Math.floor(Math.random() * colors.length)];
@@ -88,7 +91,7 @@ export const WorkspacePage: React.FC = () => {
         isReadOnly
     });
 
-    const handleSelectDocument = async (doc: AppDocument) => {
+    const handleSelectDocument = useCallback(async (doc: AppDocument) => {
         if (!doc.is_folder) {
             setSelectedDoc(doc);
             setPreviewFile(null); // Reset preview
@@ -121,7 +124,28 @@ export const WorkspacePage: React.FC = () => {
                 console.error('Failed to load attachments:', error);
             }
         }
-    };
+    }, []);
+
+    // Handle doc query parameter for navigation from links
+    useEffect(() => {
+        const docId = searchParams.get('doc');
+        
+        console.log('WorkspacePage: Checking doc parameter', { 
+            docId, 
+            documentsCount: documents.length,
+            search: location.search 
+        });
+        
+        if (docId && documents.length > 0) {
+            const doc = documents.find(d => d.id === docId);
+            console.log('WorkspacePage: Found document', doc);
+            if (doc && !doc.is_folder) {
+                console.log('WorkspacePage: Selecting document from link', doc);
+                // Use handleSelectDocument to properly load attachments and preview
+                handleSelectDocument(doc);
+            }
+        }
+    }, [searchParams, documents, location.search, handleSelectDocument]);
 
     const handleZoomIn = () => setZoom(prev => Math.min(prev + 25, 300));
     const handleZoomOut = () => setZoom(prev => Math.max(prev - 25, 25));
@@ -286,6 +310,17 @@ export const WorkspacePage: React.FC = () => {
                                     Share
                                 </button>
                             </>
+                        )}
+                        {vaultId && (
+                            <button
+                                onClick={() => setShowGraphView(true)}
+                                className="px-4 py-2 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-sm transition-all flex items-center gap-2"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                </svg>
+                                Graph View
+                            </button>
                         )}
                         <button
                             onClick={() => navigate('/profile')}
@@ -461,6 +496,7 @@ export const WorkspacePage: React.FC = () => {
                                     ref={editorRef}
                                     key={selectedDoc.id}
                                     documentId={selectedDoc.id}
+                                    vaultId={vaultId}
                                     userName={user?.display_name || user?.username || 'Anonymous'}
                                     userColor={stableColor}
                                     readOnly={isReadOnly}
@@ -528,6 +564,22 @@ export const WorkspacePage: React.FC = () => {
                     onClose={() => setShowTagManager(false)}
                     onUpdate={() => setTagRefreshKey(prev => prev + 1)}
                 />
+            )}
+
+            {showGraphView && vaultId && (
+                <div className="fixed inset-0 z-50 bg-black">
+                    <GraphView
+                        vaultId={vaultId}
+                        onNodeClick={(documentId) => {
+                            setShowGraphView(false);
+                            const doc = documents.find(d => d.id === documentId);
+                            if (doc && !doc.is_folder) {
+                                handleSelectDocument(doc);
+                            }
+                        }}
+                        onClose={() => setShowGraphView(false)}
+                    />
+                </div>
             )}
         </div>
     );
