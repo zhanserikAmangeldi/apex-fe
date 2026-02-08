@@ -5,9 +5,12 @@ import Collaboration from '@tiptap/extension-collaboration';
 import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import * as Y from 'yjs';
+import { DocumentLink, createDocumentLinkSuggestion } from './extensions/DocumentLink';
+import { useNavigate } from 'react-router-dom';
 
 interface Props {
     documentId: string;
+    vaultId?: string;
     userName?: string;
     userColor?: string;
     readOnly?: boolean;
@@ -20,13 +23,15 @@ export interface TiptapEditorRef {
 }
 
 export const TiptapEditor = forwardRef<TiptapEditorRef, Props>(({ 
-    documentId, 
+    documentId,
+    vaultId,
     userName = 'Anonymous', 
     userColor = '#6366f1',
     readOnly = false 
 }, ref) => {
     const [status, setStatus] = useState('connecting');
     const [provider, setProvider] = useState<HocuspocusProvider | null>(null);
+    const navigate = useNavigate();
 
     const ydoc = useMemo(() => new Y.Doc(), [documentId]);
 
@@ -46,6 +51,15 @@ export const TiptapEditor = forwardRef<TiptapEditorRef, Props>(({
         };
     }, [documentId, ydoc]);
 
+    const handleDocumentLinkClick = (documentId: string) => {
+        console.log('TiptapEditor: Document link clicked', { documentId, vaultId });
+        if (vaultId) {
+            // Add timestamp to force navigation even to the same document
+            const timestamp = Date.now();
+            navigate(`/workspace/${vaultId}?doc=${documentId}&t=${timestamp}`);
+        }
+    };
+
     const editor = useEditor({
         extensions: [
             StarterKit.configure({
@@ -53,6 +67,13 @@ export const TiptapEditor = forwardRef<TiptapEditorRef, Props>(({
             }),
             Collaboration.configure({
                 document: ydoc
+            }),
+            DocumentLink.configure({
+                suggestion: createDocumentLinkSuggestion(vaultId),
+                vaultId: vaultId,
+                HTMLAttributes: {
+                    class: 'document-link',
+                },
             }),
             ...(provider ? [CollaborationCursor.configure({
                 provider,
@@ -64,8 +85,19 @@ export const TiptapEditor = forwardRef<TiptapEditorRef, Props>(({
             attributes: {
                 class: 'ProseMirror prose prose-invert max-w-none focus:outline-none py-8 px-12',
             },
+            handleClickOn: (_view, _pos, node, _nodePos, event) => {
+                if (node.type.name === 'documentLink') {
+                    event.preventDefault();
+                    const documentId = node.attrs.id;
+                    if (documentId) {
+                        handleDocumentLinkClick(documentId);
+                    }
+                    return true;
+                }
+                return false;
+            },
         },
-    }, [provider, readOnly]);
+    }, [provider, readOnly, vaultId]);
 
     // Expose methods to parent component
     useImperativeHandle(ref, () => ({

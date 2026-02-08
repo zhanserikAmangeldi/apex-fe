@@ -563,6 +563,55 @@ class EditorApiService {
             throw new Error('Failed to remove tag from document');
         }
     }
+
+    // Document Search
+    async searchDocuments(query: string, vaultId?: string, limit: number = 10): Promise<AppDocument[]> {
+        const params = new URLSearchParams();
+        params.append('query', query);
+        params.append('limit', limit.toString());
+        
+        if (vaultId) {
+            params.append('vaultId', vaultId);
+        }
+
+        const url = `http://localhost:8000/api/editor-service/api/v1/search/documents?${params.toString()}`;
+        console.log('EditorAPI: Searching documents', { url, query, vaultId, token: this.getAuthToken()?.substring(0, 20) + '...' });
+
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${this.getAuthToken()}`,
+            },
+        });
+
+        console.log('EditorAPI: Search response', { status: response.status, ok: response.ok });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('EditorAPI: Search failed', { status: response.status, error: errorText });
+            throw new Error('Failed to search documents');
+        }
+
+        const data = await response.json();
+        console.log('EditorAPI: Search result', data);
+        return data.documents || [];
+    }
+
+    // Graph View
+    async getVaultGraph(vaultId: string): Promise<any> {
+        // Add timestamp to bypass cache
+        const timestamp = Date.now();
+        const response = await fetch(`http://localhost:8000/api/editor-service/api/v1/vaults/${vaultId}/graph?t=${timestamp}`, {
+            headers: {
+                'Authorization': `Bearer ${this.getAuthToken()}`,
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch graph data');
+        }
+
+        return response.json();
+    }
 }
 
 export const editorApi = new EditorApiService();
