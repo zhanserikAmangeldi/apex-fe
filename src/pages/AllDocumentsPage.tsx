@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Ellipse } from '../components/ui/Ellipse';
 import { Logo } from '../components/ui/Logo';
-import { GradientButton } from '../components/ui/Button';
+import { FileIcon } from '../components/ui/FileIcon';
 import { GlassCard } from '../components/ui/GlassCard';
 import { useAuth } from '../hooks/UseAuth';
 import { editorApi } from '../services/editorApi';
@@ -114,7 +114,13 @@ export const AllDocumentsPage: React.FC = () => {
                                 <div className="p-6 flex items-center justify-between gap-4">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-3 mb-2">
-                                            <span className="text-3xl">{doc.is_folder ? '📁' : '📄'}</span>
+                                                <FileIcon
+                                                    filename={doc.title}
+                                                    isFolder={doc.is_folder}
+                                                    customIcon={doc.icon}
+                                                    size={36}
+                                                    className="flex-shrink-0"
+                                                />
                                             <h3 className="text-white font-semibold text-lg">{doc.title}</h3>
                                         </div>
                                         <div className="flex items-center gap-4 text-sm text-white/60 ml-12">
