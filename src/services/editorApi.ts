@@ -460,6 +460,109 @@ class EditorApiService {
 
         return response.json();
     }
+
+    // Tag Management
+    async getVaultTags(vaultId: string): Promise<any[]> {
+        const response = await fetch(`http://localhost:8000/api/editor-service/api/v1/vaults/${vaultId}/tags`, {
+            headers: {
+                'Authorization': `Bearer ${this.getAuthToken()}`,
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch tags');
+        }
+
+        return response.json();
+    }
+
+    async createTag(vaultId: string, name: string, color?: string): Promise<any> {
+        const response = await fetch(`http://localhost:8000/api/editor-service/api/v1/vaults/${vaultId}/tags`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${this.getAuthToken()}`,
+            },
+            body: JSON.stringify({ name, color }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Failed to create tag');
+        }
+
+        return response.json();
+    }
+
+    async updateTag(tagId: string, name: string, color: string): Promise<any> {
+        const response = await fetch(`http://localhost:8000/api/editor-service/api/v1/tags/${tagId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${this.getAuthToken()}`,
+            },
+            body: JSON.stringify({ name, color }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to update tag');
+        }
+
+        return response.json();
+    }
+
+    async deleteTag(tagId: string): Promise<void> {
+        const response = await fetch(`http://localhost:8000/api/editor-service/api/v1/tags/${tagId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${this.getAuthToken()}`,
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to delete tag');
+        }
+    }
+
+    async getDocumentTags(documentId: string): Promise<any[]> {
+        const response = await fetch(`http://localhost:8000/api/editor-service/api/v1/documents/${documentId}/tags`, {
+            headers: {
+                'Authorization': `Bearer ${this.getAuthToken()}`,
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch document tags');
+        }
+
+        return response.json();
+    }
+
+    async addTagToDocument(documentId: string, tagId: string): Promise<void> {
+        const response = await fetch(`http://localhost:8000/api/editor-service/api/v1/documents/${documentId}/tags/${tagId}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${this.getAuthToken()}`,
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to add tag to document');
+        }
+    }
+
+    async removeTagFromDocument(documentId: string, tagId: string): Promise<void> {
+        const response = await fetch(`http://localhost:8000/api/editor-service/api/v1/documents/${documentId}/tags/${tagId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${this.getAuthToken()}`,
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to remove tag from document');
+        }
+    }
 }
 
 export const editorApi = new EditorApiService();

@@ -9,6 +9,8 @@ import type { TiptapEditorRef } from '../components/TiptapEditor';
 import { ShareModal } from '../components/ShareModal';
 import { AttachmentManager } from '../components/AttachmentManager';
 import { FileTree } from '../components/FileTree';
+import { TagManager } from '../components/TagManager';
+import { TagDisplay } from '../components/TagDisplay';
 import { editorApi } from '../services/editorApi';
 import { isPreviewableFile, getMimeType, isImageFile, isVideoFile, isPdfFile } from '../utils/fileIcons';
 import type { AppDocument, Vault } from '../types/editor';
@@ -24,6 +26,8 @@ export const WorkspacePage: React.FC = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [showShareModal, setShowShareModal] = useState(false);
+    const [showTagManager, setShowTagManager] = useState(false);
+    const [tagRefreshKey, setTagRefreshKey] = useState(0);
     const [vault, setVault] = useState<Vault | null>(null);
     const [previewFile, setPreviewFile] = useState<{ url: string; filename: string; mimeType: string } | null>(null);
     const [zoom, setZoom] = useState(100);
@@ -262,15 +266,26 @@ export const WorkspacePage: React.FC = () => {
                             </button>
                         )}
                         {selectedDoc && !selectedDoc.is_folder && (
-                            <button
-                                onClick={() => setShowShareModal(true)}
-                                className="px-4 py-2 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 text-sm transition-all flex items-center gap-2"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                                </svg>
-                                Share
-                            </button>
+                            <>
+                                <button
+                                    onClick={() => setShowTagManager(true)}
+                                    className="px-4 py-2 rounded-lg bg-green-500/20 hover:bg-green-500/30 text-green-300 text-sm transition-all flex items-center gap-2"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                    </svg>
+                                    Tags
+                                </button>
+                                <button
+                                    onClick={() => setShowShareModal(true)}
+                                    className="px-4 py-2 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 text-sm transition-all flex items-center gap-2"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                    </svg>
+                                    Share
+                                </button>
+                            </>
                         )}
                         <button
                             onClick={() => navigate('/profile')}
@@ -452,8 +467,19 @@ export const WorkspacePage: React.FC = () => {
                                 />
                             )}
                             
-                            <div className="border-t border-white/10 p-4 bg-black/20">
-                                <AttachmentManager documentId={selectedDoc.id} />
+                            <div className="border-t border-white/10 p-4 bg-black/20 space-y-4">
+                                <div>
+                                    <h3 className="text-white/60 text-sm font-medium mb-2">Tags</h3>
+                                    <TagDisplay 
+                                        documentId={selectedDoc.id} 
+                                        onManageTags={() => setShowTagManager(true)}
+                                        refreshKey={tagRefreshKey}
+                                    />
+                                </div>
+                                <div>
+                                    <h3 className="text-white/60 text-sm font-medium mb-2">Attachments</h3>
+                                    <AttachmentManager documentId={selectedDoc.id} />
+                                </div>
                             </div>
                             {isReadOnly && (
                                 <div className="border-t border-white/10 p-4 bg-yellow-500/10">
@@ -492,6 +518,15 @@ export const WorkspacePage: React.FC = () => {
                     onSuccess={() => {
                         setShowShareModal(false);
                     }}
+                />
+            )}
+
+            {showTagManager && selectedDoc && vaultId && (
+                <TagManager
+                    documentId={selectedDoc.id}
+                    vaultId={vaultId}
+                    onClose={() => setShowTagManager(false)}
+                    onUpdate={() => setTagRefreshKey(prev => prev + 1)}
                 />
             )}
         </div>
