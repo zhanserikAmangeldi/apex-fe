@@ -9,34 +9,89 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
     const [user, setUser] = useState<User | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+
+    const logout = useCallback(() => {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        api.setAccessToken(null);
+        setUser(null);
+        window.location.href = '/login';
+    }, []);
+
+    const refreshAccessToken = useCallback(async (): Promise<boolean> => {
+        if (isRefreshing) return false;
+        
+        const refreshToken = localStorage.getItem('refresh_token');
+        if (!refreshToken) {
+            logout();
+            return false;
+        }
+
+        try {
+            setIsRefreshing(true);
+            const response = await api.refreshToken(refreshToken);
+            localStorage.setItem('access_token', response.access_token);
+            localStorage.setItem('refresh_token', response.refresh_token);
+            api.setAccessToken(response.access_token);
+            setUser(response.user);
+            return true;
+        } catch (error) {
+            console.error('Failed to refresh token:', error);
+            logout();
+            return false;
+        } finally {
+            setIsRefreshing(false);
+        }
+    }, [isRefreshing, logout]);
 
     useEffect(() => {
+        // Set up unauthorized handler to try refresh token first
+        api.setUnauthorizedHandler(async () => {
+            console.log('Token expired, attempting to refresh...');
+            const refreshed = await refreshAccessToken();
+            if (!refreshed) {
+                logout();
+            }
+        });
+
         const token = localStorage.getItem('access_token');
-        console.log(token);
+        const refreshToken = localStorage.getItem('refresh_token');
+        
         if (token) {
             api.setAccessToken(token);
         }
 
-        api.getProfile()
-            .then((user) => {
-                setUser(user);
-            })
-            .catch(() => {
-                localStorage.removeItem('access_token');
-                api.setAccessToken(null);
-                setUser(null);
-            })
-            .finally(() => {
-                setIsLoading(false);
-            });
-    }, []);
+        if (token && refreshToken) {
+            api.getProfile()
+                .then((user) => {
+                    setUser(user);
+                })
+                .catch(async () => {
+                    // Try to refresh token
+                    const refreshed = await refreshAccessToken();
+                    if (!refreshed) {
+                        localStorage.removeItem('access_token');
+                        localStorage.removeItem('refresh_token');
+                        api.setAccessToken(null);
+                        setUser(null);
+                    }
+                })
+                .finally(() => {
+                    setIsLoading(false);
+                });
+        } else {
+            setIsLoading(false);
+        }
+    }, [logout, refreshAccessToken]);
 
     const clearError = useCallback(() => setError(null), []);
 
     const handleAuthResponse = (response: AuthResponse) => {
         localStorage.setItem('access_token', response.access_token);
+        localStorage.setItem('refresh_token', response.refresh_token);
         api.setAccessToken(response.access_token);
         setUser(response.user);
     };
@@ -71,12 +126,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
     };
 
-    const logout = () => {
-        localStorage.removeItem('access_token');
-        api.setAccessToken(null);
-        setUser(null);
-    };
-
     return (
         <AuthContext.Provider value={{
             user,
@@ -85,6 +134,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             login,
             register,
             logout,
+            refreshAccessToken,
             error,
             clearError,
         }}>

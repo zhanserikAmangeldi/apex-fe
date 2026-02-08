@@ -8,11 +8,17 @@ import * as Y from 'yjs';
 
 interface Props {
     documentId: string;
-    userName: string;
-    userColor: string;
+    userName?: string;
+    userColor?: string;
+    readOnly?: boolean;
 }
 
-export const TiptapEditor: React.FC<Props> = ({ documentId, userName, userColor }) => {
+export const TiptapEditor: React.FC<Props> = ({ 
+    documentId, 
+    userName = 'Anonymous', 
+    userColor = '#6366f1',
+    readOnly = false 
+}) => {
     const [status, setStatus] = useState('connecting');
     const [provider, setProvider] = useState<HocuspocusProvider | null>(null);
 
@@ -47,12 +53,13 @@ export const TiptapEditor: React.FC<Props> = ({ documentId, userName, userColor 
                 user: { name: userName, color: userColor },
             }) : null,
         ].filter(Boolean),
+        editable: !readOnly,
         editorProps: {
             attributes: {
                 class: 'ProseMirror prose prose-invert max-w-none focus:outline-none py-8 px-12',
             },
         },
-    }, [provider]);
+    }, [provider, readOnly]);
 
     if (!editor || !provider) {
         return (
@@ -82,9 +89,16 @@ export const TiptapEditor: React.FC<Props> = ({ documentId, userName, userColor 
                 {/*</div>*/}
 
                 {/* Индикатор статуса прямо в тулбаре */}
-                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10">
-                    <div className={`w-2 h-2 rounded-full ${status === 'connected' ? 'bg-green-400' : 'bg-yellow-400'}`} />
-                    <span className="text-xs text-white/60 capitalize">{status}</span>
+                <div className="flex items-center gap-3">
+                    {readOnly && (
+                        <span className="text-xs text-yellow-400 px-3 py-1 bg-yellow-500/10 rounded-full">
+                            Read Only Mode
+                        </span>
+                    )}
+                    <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10">
+                        <div className={`w-2 h-2 rounded-full ${status === 'connected' ? 'bg-green-400' : 'bg-yellow-400'}`} />
+                        <span className="text-xs text-white/60 capitalize">{status}</span>
+                    </div>
                 </div>
             </div>
 

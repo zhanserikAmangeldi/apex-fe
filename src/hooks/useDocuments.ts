@@ -13,10 +13,11 @@ export function useDocuments(vaultId: string | undefined) {
         try {
             setLoading(true);
             const data = await editorApi.getVaultDocuments(vaultId);
-            setDocuments(data);
+            setDocuments(Array.isArray(data) ? data : []);
             setError(null);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to fetch documents');
+            setDocuments([]);
         } finally {
             setLoading(false);
         }

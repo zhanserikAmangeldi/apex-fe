@@ -10,6 +10,10 @@ import { RegisterPage } from "./pages/RegisterPage.tsx";
 import { ForgotPasswordPage } from "./pages/ForgotPasswordPage.tsx";
 import { DashboardPage } from "./pages/DashboardPage.tsx";
 import { WorkspacePage } from "./pages/WorkspacePage.tsx";
+import { ProfilePage } from "./pages/ProfilePage.tsx";
+import { AllDocumentsPage } from "./pages/AllDocumentsPage.tsx";
+import { SharedWithMePage } from "./pages/SharedWithMePage.tsx";
+import { DocumentViewPage } from "./pages/DocumentViewPage.tsx";
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { isAuthenticated, isLoading } = useAuth();
@@ -71,6 +75,26 @@ function AppRoutes() {
             <Route path="/workspace/:vaultId" element={
                 <ProtectedRoute>
                     <WorkspacePage />
+                </ProtectedRoute>
+            } />
+            <Route path="/profile" element={
+                <ProtectedRoute>
+                    <ProfilePage />
+                </ProtectedRoute>
+            } />
+            <Route path="/documents" element={
+                <ProtectedRoute>
+                    <AllDocumentsPage />
+                </ProtectedRoute>
+            } />
+            <Route path="/shared" element={
+                <ProtectedRoute>
+                    <SharedWithMePage />
+                </ProtectedRoute>
+            } />
+            <Route path="/document/:documentId" element={
+                <ProtectedRoute>
+                    <DocumentViewPage />
                 </ProtectedRoute>
             } />
 

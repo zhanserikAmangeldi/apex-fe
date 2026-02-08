@@ -11,10 +11,11 @@ export function useVaults() {
         try {
             setLoading(true);
             const data = await editorApi.getVaults();
-            setVaults(data);
+            setVaults(Array.isArray(data) ? data : []);
             setError(null);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to fetch vaults');
+            setVaults([]);
         } finally {
             setLoading(false);
         }

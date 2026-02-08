@@ -12,6 +12,7 @@ const API_BASE = 'http://localhost:8000/api/';
 class ApiService {
     private baseUrl: string;
     private accessToken: string | null = null;
+    private onUnauthorized: (() => Promise<void>) | null = null;
 
     constructor(baseUrl: string) {
         this.baseUrl = baseUrl;
@@ -19,6 +20,14 @@ class ApiService {
 
     setAccessToken(token: string | null) {
         this.accessToken = token;
+    }
+
+    getAccessToken(): string | null {
+        return this.accessToken;
+    }
+
+    setUnauthorizedHandler(handler: () => Promise<void>) {
+        this.onUnauthorized = handler;
     }
 
     private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -35,6 +44,34 @@ class ApiService {
             ...options,
             headers,
         });
+
+        // Handle 401 Unauthorized
+        if (response.status === 401) {
+            if (this.onUnauthorized) {
+                await this.onUnauthorized();
+                // Retry the request with new token
+                const newHeaders: HeadersInit = {
+                    'Content-Type': 'application/json',
+                    ...options.headers,
+                };
+                if (this.accessToken) {
+                    (newHeaders as Record<string, string>)['Authorization'] = `Bearer ${this.accessToken}`;
+                }
+                const retryResponse = await fetch(`${this.baseUrl}${endpoint}`, {
+                    ...options,
+                    headers: newHeaders,
+                });
+                
+                if (!retryResponse.ok) {
+                    const data = await retryResponse.json();
+                    throw data as ApiError;
+                }
+                return retryResponse.json() as T;
+            }
+            const error: any = new Error('Unauthorized');
+            error.status = 401;
+            throw error;
+        }
 
         const data = await response.json();
 
@@ -59,6 +96,103 @@ class ApiService {
         });
     }
 
+    async logout(refreshToken: string, accessToken: string): Promise<{ message: string }> {
+        return this.request<{ message: string }>('auth-service/api/v1/auth/logout', {
+            method: 'POST',
+            body: JSON.stringify({ refresh_token: refreshToken, access_token: accessToken }),
+        });
+    }
+
+    async logoutAll(): Promise<{ message: string }> {
+        return this.request<{ message: string }>('auth-service/api/v1/auth/logout-all', {
+            method: 'POST',
+        });
+    }
+
+    async getActiveSessions(currentToken?: string): Promise<any[]> {
+        const query = currentToken ? `?current_token=${currentToken}` : '';
+        return this.request<any[]>(`auth-service/api/v1/auth/sessions${query}`, {
+            method: 'GET',
+        });
+    }
+
+    async updateProfile(data: { display_name?: string; bio?: string; status?: string }): Promise<User> {
+        return this.request<User>('auth-service/api/v1/users/me', {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async getUserById(id: number): Promise<User> {
+        return this.request<User>(`auth-service/api/v1/users/${id}`, {
+            method: 'GET',
+        });
+    }
+
+    async uploadAvatar(file: File): Promise<{ message: string; path: string }> {
+        const formData = new FormData();
+        formData.append('avatar', file);
+
+        const headers: HeadersInit = {};
+        if (this.accessToken) {
+            headers['Authorization'] = `Bearer ${this.accessToken}`;
+        }
+
+        const response = await fetch(`${this.baseUrl}auth-service/api/v1/users/upload-avatar`, {
+            method: 'POST',
+            headers,
+            body: formData,
+        });
+
+        // Handle 401 Unauthorized
+        if (response.status === 401) {
+            if (this.onUnauthorized) {
+                this.onUnauthorized();
+            }
+            const error: any = new Error('Unauthorized');
+            error.status = 401;
+            throw error;
+        }
+
+        const data = await response.json();
+        if (!response.ok) {
+            throw data as ApiError;
+        }
+
+        return data;
+    }
+
+    async getAvatar(): Promise<Blob> {
+        const headers: HeadersInit = {};
+        if (this.accessToken) {
+            headers['Authorization'] = `Bearer ${this.accessToken}`;
+        }
+
+        const response = await fetch(`${this.baseUrl}auth-service/api/v1/users/get-avatar`, {
+            method: 'GET',
+            headers,
+        });
+
+        // Handle 401 Unauthorized
+        if (response.status === 401) {
+            if (this.onUnauthorized) {
+                this.onUnauthorized();
+            }
+            const error: any = new Error('Unauthorized');
+            error.status = 401;
+            error.response = { status: 401 };
+            throw error;
+        }
+
+        if (!response.ok) {
+            const error: any = new Error('Failed to fetch avatar');
+            error.response = { status: response.status };
+            throw error;
+        }
+
+        return response.blob();
+    }
+
     async forgotPassword(data: ForgotPasswordRequest): Promise<{ message: string }> {
         return this.request<{ message: string }>('/auth/forgot-password', {
             method: 'POST',
@@ -67,7 +201,7 @@ class ApiService {
     }
 
     async refreshToken(refreshToken: string): Promise<AuthResponse> {
-        return this.request<AuthResponse>('/auth/refresh', {
+        return this.request<AuthResponse>('auth-service/api/v1/auth/refresh', {
             method: 'POST',
             body: JSON.stringify({ refresh_token: refreshToken }),
         });

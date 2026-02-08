@@ -1,11 +1,16 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { GradientButton } from '../components/ui/Button';
 import { GlassCard } from '../components/ui/GlassCard';
 import { useAuth } from '../hooks/UseAuth';
 import { useDocuments } from '../hooks/useDocuments';
 import { TiptapEditor } from '../components/TiptapEditor';
-import type { AppDocument } from '../types/editor';
+import { ShareModal } from '../components/ShareModal';
+import { AttachmentManager } from '../components/AttachmentManager';
+import { FileTree } from '../components/FileTree';
+import { editorApi } from '../services/editorApi';
+import type { AppDocument, Vault } from '../types/editor';
+import '../components/FileTree.css';
 
 export const WorkspacePage: React.FC = () => {
     const { vaultId } = useParams<{ vaultId: string }>();
@@ -13,16 +18,36 @@ export const WorkspacePage: React.FC = () => {
     const { user } = useAuth();
 
     const [selectedDoc, setSelectedDoc] = useState<AppDocument | null>(null);
-    const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const [showShareModal, setShowShareModal] = useState(false);
+    const [vault, setVault] = useState<Vault | null>(null);
 
     const {
         documents,
         loading,
         createDocument,
         deleteDocument,
+        updateDocument,
+        moveDocument,
+        refetch,
     } = useDocuments(vaultId);
+
+    // Load vault info to check permissions
+    useEffect(() => {
+        const loadVault = async () => {
+            if (vaultId) {
+                try {
+                    const vaultData = await editorApi.getVault(vaultId);
+                    setVault(vaultData);
+                    console.log('Vault loaded:', vaultData);
+                } catch (error) {
+                    console.error('Failed to load vault:', error);
+                }
+            }
+        };
+        loadVault();
+    }, [vaultId]);
 
 
     const stableColor = useMemo(() => {
@@ -30,14 +55,29 @@ export const WorkspacePage: React.FC = () => {
         return colors[Math.floor(Math.random() * colors.length)];
     }, []);
 
-    const buildTree = (items: AppDocument[], parentId: string | null = null): AppDocument[] => {
-        return items
-            .filter(i => i.parent_id === parentId)
-            .map(i => ({
-                ...i,
-                children: i.is_folder ? buildTree(items, i.id) : []
-            }));
-    };
+    // Determine if user has read-only access to selected document
+    const isReadOnly = useMemo(() => {
+        // If no document selected, use vault permissions
+        if (!selectedDoc) {
+            return vault?.user_permission === 'read';
+        }
+        
+        // If document has user_permission, use it (direct document permissions or inherited from vault)
+        if (selectedDoc.user_permission) {
+            return selectedDoc.user_permission === 'read';
+        }
+        
+        // Fallback to vault permissions
+        return vault?.user_permission === 'read';
+    }, [vault, selectedDoc]);
+
+    console.log('Workspace permissions:', {
+        vaultId,
+        vault_permission: vault?.user_permission,
+        selectedDocId: selectedDoc?.id,
+        doc_permission: selectedDoc?.user_permission,
+        isReadOnly
+    });
 
     const handleSelectDocument = (doc: AppDocument) => {
         if (!doc.is_folder) {
@@ -71,6 +111,22 @@ export const WorkspacePage: React.FC = () => {
         }
     };
 
+    const handleMoveDocument = async (docId: string, newParentId: string | null) => {
+        try {
+            await moveDocument(docId, newParentId);
+        } catch (err) {
+            alert('Failed to move item: ' + err);
+        }
+    };
+
+    const handleRenameDocument = async (id: string, newTitle: string) => {
+        try {
+            await updateDocument(id, { title: newTitle });
+        } catch (err) {
+            alert('Failed to rename item: ' + err);
+        }
+    };
+
     if (loading) {
         return (
             <div className="h-screen bg-[#0F0F0F] flex items-center justify-center">
@@ -99,18 +155,32 @@ export const WorkspacePage: React.FC = () => {
                             <div>
                                 <h2 className="text-white font-semibold">Workspace</h2>
                                 <p className="text-white/60 text-xs">
-                                    {documents.filter(d => !d.is_folder).length} documents
+                                    {(documents || []).filter(d => !d.is_folder).length} documents
                                 </p>
                             </div>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <div className="px-3 py-2 rounded-lg bg-white/10">
+                        {selectedDoc && !selectedDoc.is_folder && (
+                            <button
+                                onClick={() => setShowShareModal(true)}
+                                className="px-4 py-2 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 text-sm transition-all flex items-center gap-2"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                </svg>
+                                Share
+                            </button>
+                        )}
+                        <button
+                            onClick={() => navigate('/profile')}
+                            className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+                        >
                             <span className="text-white text-sm">
                                 {user?.display_name || user?.username}
                             </span>
-                        </div>
+                        </button>
                     </div>
                 </div>
             </header>
@@ -120,34 +190,19 @@ export const WorkspacePage: React.FC = () => {
                     className={`flex-shrink-0 ${sidebarCollapsed ? 'w-0' : 'w-80'} transition-all duration-300 
                     backdrop-blur-sm bg-black/20 border-r border-white/10 flex flex-col overflow-hidden`}
                 >
-                    <div className="p-4 border-b border-white/10 flex items-center justify-between">
-                        <h3 className="text-white font-semibold text-sm uppercase tracking-wide">Files</h3>
-                        <button
-                            onClick={() => setShowCreateModal(true)}
-                            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                        >
-                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                            </svg>
-                        </button>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto p-3 space-y-1">
-                        {buildTree(documents).map(doc => (
-                            <FileTreeItem
-                                key={doc.id}
-                                item={doc}
-                                level={0}
-                                isOpen={openFolders[doc.id]}
-                                onToggle={() => setOpenFolders(p => ({ ...p, [doc.id]: !p[doc.id] }))}
-                                onSelect={handleSelectDocument}
-                                onDelete={handleDeleteDocument}
-                                isSelected={selectedDoc?.id === doc.id}
-                                openFolders={openFolders}
-                                setOpenFolders={setOpenFolders}
-                            />
-                        ))}
-                    </div>
+                    {!sidebarCollapsed && (
+                        <FileTree
+                            documents={documents}
+                            selectedDoc={selectedDoc}
+                            vaultId={vaultId!}
+                            onSelect={handleSelectDocument}
+                            onDelete={isReadOnly ? () => {} : handleDeleteDocument}
+                            onMove={isReadOnly ? () => {} : handleMoveDocument}
+                            onRename={isReadOnly ? () => {} : handleRenameDocument}
+                            onCreate={isReadOnly ? () => {} : () => setShowCreateModal(true)}
+                            onRefresh={refetch}
+                        />
+                    )}
                 </aside>
 
                 <button
@@ -167,12 +222,27 @@ export const WorkspacePage: React.FC = () => {
 
                 <main className="flex-1 flex flex-col overflow-hidden bg-[#0F0F0F]">
                     {selectedDoc && !selectedDoc.is_folder ? (
-                        <TiptapEditor
-                            key={selectedDoc.id}
-                            documentId={selectedDoc.id}
-                            userName={user?.display_name || user?.username || 'Anonymous'}
-                            userColor={stableColor}
-                        />
+                        <div className="flex-1 flex flex-col overflow-hidden">
+                            <TiptapEditor
+                                key={selectedDoc.id}
+                                documentId={selectedDoc.id}
+                                userName={user?.display_name || user?.username || 'Anonymous'}
+                                userColor={stableColor}
+                                readOnly={isReadOnly}
+                            />
+                            {!isReadOnly && (
+                                <div className="border-t border-white/10 p-4 bg-black/20">
+                                    <AttachmentManager documentId={selectedDoc.id} />
+                                </div>
+                            )}
+                            {isReadOnly && (
+                                <div className="border-t border-white/10 p-4 bg-yellow-500/10">
+                                    <p className="text-yellow-400 text-sm text-center">
+                                        You have read-only access to this vault
+                                    </p>
+                                </div>
+                            )}
+                        </div>
                     ) : (
                         <div className="flex-1 flex items-center justify-center">
                             <div className="text-center">
@@ -193,84 +263,22 @@ export const WorkspacePage: React.FC = () => {
                     onSubmit={handleCreateDocument}
                 />
             )}
-        </div>
-    );
-};
 
-const FileTreeItem: React.FC<{
-    item: AppDocument & { children?: AppDocument[] };
-    level: number;
-    isOpen: boolean;
-    onToggle: () => void;
-    onSelect: (doc: AppDocument) => void;
-    onDelete: (id: string) => void;
-    isSelected: boolean;
-    openFolders: Record<string, boolean>;
-    setOpenFolders: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
-}> = ({ item, level, isOpen, onToggle, onSelect, onDelete, isSelected, openFolders, setOpenFolders }) => {
-    return (
-        <div>
-            <div
-                onClick={() => item.is_folder ? onToggle() : onSelect(item)}
-                className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all
-                ${isSelected
-                    ? 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 ring-1 ring-purple-500/50'
-                    : 'hover:bg-white/10'}`}
-                style={{ paddingLeft: `${12 + level * 16}px` }}
-            >
-                {item.is_folder && (
-                    <svg
-                        className={`w-4 h-4 text-white/60 transition-transform ${isOpen ? 'rotate-90' : ''}`}
-                        fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                    >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                )}
-                {!item.is_folder && <span className="w-4" />}
-
-                <span className="text-lg flex-shrink-0">
-                    {item.icon || (item.is_folder ? '📁' : '📄')}
-                </span>
-
-                <span className={`flex-1 truncate text-sm ${isSelected ? 'text-white font-medium' : 'text-white/80'}`}>
-                    {item.title}
-                </span>
-
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete(item.id);
+            {showShareModal && selectedDoc && (
+                <ShareModal
+                    type="document"
+                    id={selectedDoc.id}
+                    onClose={() => setShowShareModal(false)}
+                    onSuccess={() => {
+                        setShowShareModal(false);
                     }}
-                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500/20 rounded transition-all"
-                >
-                    <svg className="w-3 h-3 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                </button>
-            </div>
-
-            {item.is_folder && isOpen && item.children && (
-                <div>
-                    {item.children.map(child => (
-                        <FileTreeItem
-                            key={child.id}
-                            item={child}
-                            level={level + 1}
-                            isOpen={openFolders[child.id] || false}
-                            onToggle={() => setOpenFolders(p => ({ ...p, [child.id]: !p[child.id] }))}
-                            onSelect={onSelect}
-                            onDelete={onDelete}
-                            isSelected={isSelected}
-                            openFolders={openFolders}
-                            setOpenFolders={setOpenFolders}
-                        />
-                    ))}
-                </div>
+                />
             )}
         </div>
     );
 };
+
+
 
 const CreateDocumentModal: React.FC<{
     onClose: () => void;
@@ -279,37 +287,71 @@ const CreateDocumentModal: React.FC<{
     const [form, setForm] = useState({ title: '', is_folder: false });
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div onClick={e => e.stopPropagation()} className="max-w-md w-full">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-6" onClick={onClose}>
+            <div onClick={e => e.stopPropagation()} className="max-w-xl w-full">
                 <GlassCard>
-                    <div className="p-6">
-                        <h2 className="text-2xl font-semibold text-white mb-6">Create New Item</h2>
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-3">
+                    <div className="p-10">
+                        <h2 className="text-3xl font-semibold text-white mb-8">Создать новый элемент</h2>
+                        <div className="space-y-6">
+                            <div className="grid grid-cols-2 gap-4">
                                 <button
                                     onClick={() => setForm(p => ({ ...p, is_folder: false }))}
-                                    className={`p-4 rounded-xl transition-all ${!form.is_folder ? 'bg-purple-500/20 ring-2 ring-purple-500/50' : 'bg-white/10'}`}
+                                    className={`p-6 rounded-2xl transition-all ${
+                                        !form.is_folder 
+                                            ? 'bg-purple-500/20 ring-2 ring-purple-500/50 shadow-lg shadow-purple-500/20' 
+                                            : 'bg-white/10 hover:bg-white/15'
+                                    }`}
                                 >
-                                    <p className="text-white font-medium text-sm">Document</p>
+                                    <div className="text-5xl mb-3">📄</div>
+                                    <p className="text-white font-medium text-lg">Документ</p>
+                                    <p className="text-white/60 text-sm mt-2">Файл для редактирования</p>
                                 </button>
                                 <button
                                     onClick={() => setForm(p => ({ ...p, is_folder: true }))}
-                                    className={`p-4 rounded-xl transition-all ${form.is_folder ? 'bg-blue-500/20 ring-2 ring-blue-500/50' : 'bg-white/10'}`}
+                                    className={`p-6 rounded-2xl transition-all ${
+                                        form.is_folder 
+                                            ? 'bg-blue-500/20 ring-2 ring-blue-500/50 shadow-lg shadow-blue-500/20' 
+                                            : 'bg-white/10 hover:bg-white/15'
+                                    }`}
                                 >
-                                    <p className="text-white font-medium text-sm">Folder</p>
+                                    <div className="text-5xl mb-3">📁</div>
+                                    <p className="text-white font-medium text-lg">Папка</p>
+                                    <p className="text-white/60 text-sm mt-2">Для организации файлов</p>
                                 </button>
                             </div>
-                            <input
-                                type="text"
-                                value={form.title}
-                                onChange={(e) => setForm(p => ({ ...p, title: e.target.value }))}
-                                placeholder="Name..."
-                                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white outline-none"
-                                autoFocus
-                            />
-                            <div className="flex gap-3 pt-2">
-                                <button onClick={onClose} className="flex-1 px-4 py-3 rounded-xl bg-white/10 text-white">Cancel</button>
-                                <GradientButton variant="blue" onClick={() => form.title.trim() && onSubmit(form)} className="flex-1">Create</GradientButton>
+                            <div>
+                                <label className="block text-white/80 text-base mb-3 font-medium">
+                                    Название {form.is_folder ? 'папки' : 'документа'}
+                                </label>
+                                <input
+                                    type="text"
+                                    value={form.title}
+                                    onChange={(e) => setForm(p => ({ ...p, title: e.target.value }))}
+                                    placeholder={form.is_folder ? "Моя папка..." : "Мой документ..."}
+                                    className="w-full px-6 py-4 text-lg rounded-2xl bg-white/10 border border-white/20 text-white placeholder:text-white/40 outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+                                    autoFocus
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && form.title.trim()) {
+                                            onSubmit(form);
+                                        }
+                                    }}
+                                />
+                            </div>
+                            <div className="flex gap-4 pt-4">
+                                <button 
+                                    onClick={onClose} 
+                                    className="flex-1 px-6 py-4 rounded-2xl bg-white/10 text-white hover:bg-white/15 transition-all text-lg"
+                                >
+                                    Отмена
+                                </button>
+                                <GradientButton 
+                                    variant="blue" 
+                                    onClick={() => form.title.trim() && onSubmit(form)} 
+                                    className="flex-1 py-4 text-lg"
+                                    disabled={!form.title.trim()}
+                                >
+                                    Создать
+                                </GradientButton>
                             </div>
                         </div>
                     </div>

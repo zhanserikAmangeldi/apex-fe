@@ -6,6 +6,8 @@ import { GradientButton } from '../components/ui/Button';
 import { GlassCard } from '../components/ui/GlassCard';
 import { useAuth } from '../hooks/UseAuth';
 import { useVaults } from '../hooks/useVaults';
+import { ShareModal } from '../components/ShareModal';
+import { ManageAccessModal } from '../components/ManageAccessModal';
 import type { Vault, CreateVaultRequest } from '../types/editor';
 
 export const DashboardPage: React.FC = () => {
@@ -13,8 +15,22 @@ export const DashboardPage: React.FC = () => {
     const { user, logout } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [shareVaultId, setShareVaultId] = useState<string | null>(null);
+    const [manageAccessVaultId, setManageAccessVaultId] = useState<string | null>(null);
 
     const { vaults, loading, error, createVault } = useVaults();
+
+    // Map hex colors to Tailwind gradients for display
+    const getGradientFromColor = (hexColor: string): string => {
+        const colorMap: Record<string, string> = {
+            '#a855f7': 'from-purple-500 to-pink-500',
+            '#3b82f6': 'from-blue-500 to-purple-500',
+            '#ec4899': 'from-pink-500 to-red-500',
+            '#06b6d4': 'from-blue-500 to-cyan-500',
+            '#10b981': 'from-green-500 to-blue-500',
+        };
+        return colorMap[hexColor] || 'from-purple-500 to-pink-500';
+    };
 
     const formatDate = (date: string) => {
         const d = new Date(date);
@@ -26,9 +42,9 @@ export const DashboardPage: React.FC = () => {
         return d.toLocaleDateString();
     };
 
-    const filteredVaults = vaults.filter(v =>
+    const filteredVaults = (vaults || []).filter(v =>
         v.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        v.description.toLowerCase().includes(searchQuery.toLowerCase())
+        (v.description || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     return (
@@ -48,9 +64,24 @@ export const DashboardPage: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <div className="px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
+                    <button
+                        onClick={() => navigate('/shared')}
+                        className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm transition-all"
+                    >
+                        Shared with Me
+                    </button>
+                    <button
+                        onClick={() => navigate('/documents')}
+                        className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm transition-all"
+                    >
+                        All Documents
+                    </button>
+                    <button
+                        onClick={() => navigate('/profile')}
+                        className="px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-colors"
+                    >
                         <span className="text-white text-sm">{user?.display_name || user?.username}</span>
-                    </div>
+                    </button>
                     <button
                         onClick={logout}
                         className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm transition-all"
@@ -83,7 +114,7 @@ export const DashboardPage: React.FC = () => {
                     <GradientButton
                         variant="blue"
                         onClick={() => setShowCreateModal(true)}
-                        className="px-8"
+                        className="px-6 py-3"
                     >
                         + New Vault
                     </GradientButton>
@@ -112,7 +143,16 @@ export const DashboardPage: React.FC = () => {
                             <VaultCard
                                 key={vault.id}
                                 vault={vault}
+                                gradient={getGradientFromColor(vault.color)}
                                 onClick={() => navigate(`/workspace/${vault.id}`)}
+                                onShare={(e) => {
+                                    e.stopPropagation();
+                                    setShareVaultId(vault.id);
+                                }}
+                                onManageAccess={(e) => {
+                                    e.stopPropagation();
+                                    setManageAccessVaultId(vault.id);
+                                }}
                                 formatDate={formatDate}
                             />
                         ))}
@@ -126,24 +166,77 @@ export const DashboardPage: React.FC = () => {
                     onSubmit={createVault}
                 />
             )}
+
+            {shareVaultId && (
+                <ShareModal
+                    type="vault"
+                    id={shareVaultId}
+                    onClose={() => setShareVaultId(null)}
+                    onSuccess={() => setShareVaultId(null)}
+                />
+            )}
+
+            {manageAccessVaultId && (
+                <ManageAccessModal
+                    type="vault"
+                    id={manageAccessVaultId}
+                    onClose={() => setManageAccessVaultId(null)}
+                />
+            )}
         </div>
     );
 };
 
 const VaultCard: React.FC<{
     vault: Vault;
+    gradient: string;
     onClick: () => void;
+    onShare: (e: React.MouseEvent) => void;
+    onManageAccess: (e: React.MouseEvent) => void;
     formatDate: (date: string) => string;
-}> = ({ vault, onClick, formatDate }) => {
+}> = ({ vault, gradient, onClick, onShare, onManageAccess, formatDate }) => {
+    const isOwner = vault.user_permission === 'owner';
+    const canManageAccess = isOwner || vault.user_permission === 'admin';
+
+    console.log('VaultCard permissions:', {
+        vaultId: vault.id,
+        vaultName: vault.name,
+        user_permission: vault.user_permission,
+        isOwner,
+        canManageAccess
+    });
+
     return (
         <div onClick={onClick} className="group cursor-pointer">
             <GlassCard>
                 <div className="relative">
-                    <div className={`absolute inset-x-0 top-0 h-32 bg-gradient-to-br ${vault.color} opacity-20 rounded-t-2xl`} />
+                    <div className={`absolute inset-x-0 top-0 h-32 bg-gradient-to-br ${gradient} opacity-20 rounded-t-2xl`} />
                     <div className="relative p-6">
                         <div className="flex items-start justify-between mb-4">
-                            <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${vault.color} flex items-center justify-center text-3xl shadow-lg transform group-hover:scale-110 transition-transform duration-300`}>
+                            <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center text-3xl shadow-lg transition-transform duration-300`}>
                                 {vault.icon}
+                            </div>
+                            <div className="flex gap-2">
+                                {canManageAccess && (
+                                    <button
+                                        onClick={onManageAccess}
+                                        className="opacity-0 group-hover:opacity-100 p-2 hover:bg-blue-500/20 rounded-lg transition-all"
+                                        title="Manage Access"
+                                    >
+                                        <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                        </svg>
+                                    </button>
+                                )}
+                                <button
+                                    onClick={onShare}
+                                    className="opacity-0 group-hover:opacity-100 p-2 hover:bg-purple-500/20 rounded-lg transition-all"
+                                    title="Share"
+                                >
+                                    <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                    </svg>
+                                </button>
                             </div>
                         </div>
                         <h3 className="text-white font-semibold text-xl mb-2 group-hover:text-purple-300 transition-colors">
@@ -176,17 +269,17 @@ const CreateVaultModal: React.FC<{
         name: '',
         description: '',
         icon: '📁',
-        color: 'from-purple-500 to-pink-500'
+        color: '#a855f7'
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const icons = ['📁', '📝', '💼', '🎓', '🏠', '💡', '🎨', '🔬', '📚', '🎯'];
     const colors = [
-        { name: 'Purple-Pink', value: 'from-purple-500 to-pink-500' },
-        { name: 'Blue-Purple', value: 'from-blue-500 to-purple-500' },
-        { name: 'Pink-Red', value: 'from-pink-500 to-red-500' },
-        { name: 'Blue-Cyan', value: 'from-blue-500 to-cyan-500' },
-        { name: 'Green-Blue', value: 'from-green-500 to-blue-500' },
+        { name: 'Purple', value: '#a855f7', gradient: 'from-purple-500 to-pink-500' },
+        { name: 'Blue', value: '#3b82f6', gradient: 'from-blue-500 to-purple-500' },
+        { name: 'Pink', value: '#ec4899', gradient: 'from-pink-500 to-red-500' },
+        { name: 'Cyan', value: '#06b6d4', gradient: 'from-blue-500 to-cyan-500' },
+        { name: 'Green', value: '#10b981', gradient: 'from-green-500 to-blue-500' },
     ];
 
     const handleSubmit = async () => {
@@ -227,7 +320,7 @@ const CreateVaultModal: React.FC<{
                                                 key={icon}
                                                 onClick={() => setForm(p => ({ ...p, icon }))}
                                                 className={`w-10 h-10 text-xl rounded-lg transition-all ${
-                                                    form.icon === icon ? 'bg-white/30 scale-110 ring-2 ring-purple-500' : 'bg-white/10 hover:bg-white/20'
+                                                    form.icon === icon ? 'bg-white/30 ring-2 ring-purple-500' : 'bg-white/10 hover:bg-white/20'
                                                 }`}
                                             >
                                                 {icon}
@@ -242,7 +335,7 @@ const CreateVaultModal: React.FC<{
                                             <button
                                                 key={c.value}
                                                 onClick={() => setForm(p => ({ ...p, color: c.value }))}
-                                                className={`h-8 rounded-md bg-gradient-to-r ${c.value} border-2 ${form.color === c.value ? 'border-white' : 'border-transparent'}`}
+                                                className={`h-8 rounded-md bg-gradient-to-r ${c.gradient} border-2 ${form.color === c.value ? 'border-white' : 'border-transparent'}`}
                                             />
                                         ))}
                                     </div>
