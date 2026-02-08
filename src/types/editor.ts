@@ -85,3 +85,17 @@ export interface HealthStatus {
         snapshotWorker?: { status: string; error?: string };
     };
 }
+
+export interface Tag {
+    id: string;
+    name: string;
+    color: string;
+    vault_id: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CreateTagRequest {
+    name: string;
+    color?: string;
+}

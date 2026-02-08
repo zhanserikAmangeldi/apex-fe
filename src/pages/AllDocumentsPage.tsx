@@ -4,6 +4,7 @@ import { Ellipse } from '../components/ui/Ellipse';
 import { Logo } from '../components/ui/Logo';
 import { FileIcon } from '../components/ui/FileIcon';
 import { GlassCard } from '../components/ui/GlassCard';
+import { TagDisplay } from '../components/TagDisplay';
 import { useAuth } from '../hooks/UseAuth';
 import { editorApi } from '../services/editorApi';
 import type { AppDocument } from '../types/editor';
@@ -130,6 +131,11 @@ export const AllDocumentsPage: React.FC = () => {
                                                 <span>Size: {formatSize(doc.snapshot_size_bytes)}</span>
                                             )}
                                         </div>
+                                        {!doc.is_folder && (
+                                            <div className="ml-12 mt-2">
+                                                <TagDisplay documentId={doc.id} />
+                                            </div>
+                                        )}
                                     </div>
                                     <button
                                         onClick={() => navigate(`/workspace/${doc.vault_id}`)}
