@@ -1,14 +1,16 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { GradientButton } from '../components/ui/Button';
 import { GlassCard } from '../components/ui/GlassCard';
 import { useAuth } from '../hooks/UseAuth';
 import { useDocuments } from '../hooks/useDocuments';
 import { TiptapEditor } from '../components/TiptapEditor';
+import type { TiptapEditorRef } from '../components/TiptapEditor';
 import { ShareModal } from '../components/ShareModal';
 import { AttachmentManager } from '../components/AttachmentManager';
 import { FileTree } from '../components/FileTree';
 import { editorApi } from '../services/editorApi';
+import { isPreviewableFile, getMimeType, isImageFile, isVideoFile, isPdfFile } from '../utils/fileIcons';
 import type { AppDocument, Vault } from '../types/editor';
 import '../components/FileTree.css';
 
@@ -16,12 +18,15 @@ export const WorkspacePage: React.FC = () => {
     const { vaultId } = useParams<{ vaultId: string }>();
     const navigate = useNavigate();
     const { user } = useAuth();
+    const editorRef = useRef<TiptapEditorRef>(null);
 
     const [selectedDoc, setSelectedDoc] = useState<AppDocument | null>(null);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [showShareModal, setShowShareModal] = useState(false);
     const [vault, setVault] = useState<Vault | null>(null);
+    const [previewFile, setPreviewFile] = useState<{ url: string; filename: string; mimeType: string } | null>(null);
+    const [zoom, setZoom] = useState(100);
 
     const {
         documents,
@@ -79,9 +84,91 @@ export const WorkspacePage: React.FC = () => {
         isReadOnly
     });
 
-    const handleSelectDocument = (doc: AppDocument) => {
+    const handleSelectDocument = async (doc: AppDocument) => {
         if (!doc.is_folder) {
             setSelectedDoc(doc);
+            setPreviewFile(null); // Reset preview
+            setZoom(100); // Reset zoom
+            
+            // Check if document has attachments
+            try {
+                const attachments = await editorApi.getDocumentAttachments(doc.id);
+                
+                // If document has a previewable attachment with same name, prepare preview
+                if (attachments.length > 0) {
+                    const mainAttachment = attachments.find((att: any) => 
+                        att.filename === doc.title || isPreviewableFile(att.filename)
+                    );
+                    
+                    if (mainAttachment && isPreviewableFile(mainAttachment.filename)) {
+                        const { downloadUrl } = await editorApi.getAttachment(mainAttachment.id);
+                        const token = localStorage.getItem('access_token');
+                        const urlWithToken = `${downloadUrl}?token=${encodeURIComponent(token || '')}`;
+                        
+                        // Set preview data but don't open modal
+                        setPreviewFile({
+                            url: urlWithToken,
+                            filename: mainAttachment.filename,
+                            mimeType: getMimeType(mainAttachment.filename)
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load attachments:', error);
+            }
+        }
+    };
+
+    const handleZoomIn = () => setZoom(prev => Math.min(prev + 25, 300));
+    const handleZoomOut = () => setZoom(prev => Math.max(prev - 25, 25));
+    const handleZoomReset = () => setZoom(100);
+
+    const handleDownload = async () => {
+        if (!previewFile) return;
+        
+        try {
+            const response = await fetch(previewFile.url);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = previewFile.filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (error) {
+            console.error('Download failed:', error);
+            alert('Failed to download file');
+        }
+    };
+
+    const handleExportMarkdown = async () => {
+        if (!selectedDoc || !editorRef.current) return;
+        
+        try {
+            // Get markdown content from editor
+            const markdown = editorRef.current.getMarkdown();
+            
+            // Sanitize filename: remove .md extension if exists, clean name, add .md back
+            let filename = selectedDoc.title;
+            if (filename.endsWith('.md')) {
+                filename = filename.slice(0, -3);
+            }
+            filename = filename.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.md';
+            
+            const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (error) {
+            console.error('Export failed:', error);
+            alert('Failed to export document');
         }
     };
 
@@ -162,6 +249,18 @@ export const WorkspacePage: React.FC = () => {
                     </div>
 
                     <div className="flex items-center gap-3">
+                        {selectedDoc && !selectedDoc.is_folder && !previewFile && (
+                            <button
+                                onClick={handleExportMarkdown}
+                                className="px-4 py-2 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 text-sm transition-all flex items-center gap-2"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                                          d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Export as Markdown
+                            </button>
+                        )}
                         {selectedDoc && !selectedDoc.is_folder && (
                             <button
                                 onClick={() => setShowShareModal(true)}
@@ -223,18 +322,139 @@ export const WorkspacePage: React.FC = () => {
                 <main className="flex-1 flex flex-col overflow-hidden bg-[#0F0F0F]">
                     {selectedDoc && !selectedDoc.is_folder ? (
                         <div className="flex-1 flex flex-col overflow-hidden">
-                            <TiptapEditor
-                                key={selectedDoc.id}
-                                documentId={selectedDoc.id}
-                                userName={user?.display_name || user?.username || 'Anonymous'}
-                                userColor={stableColor}
-                                readOnly={isReadOnly}
-                            />
-                            {!isReadOnly && (
-                                <div className="border-t border-white/10 p-4 bg-black/20">
-                                    <AttachmentManager documentId={selectedDoc.id} />
+                            {previewFile ? (
+                                // Show inline preview instead of editor
+                                <div className="flex-1 flex flex-col overflow-hidden">
+                                    {/* Preview Header */}
+                                    <div className="flex items-center justify-between px-6 py-4 bg-black/40 border-b border-white/10">
+                                        <div className="flex items-center gap-3">
+                                            <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                                                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                                                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                            <h2 className="text-white font-medium">{previewFile.filename}</h2>
+                                            <span className="text-white/40 text-sm">({previewFile.mimeType})</span>
+                                        </div>
+                                        
+                                        <div className="flex items-center gap-2">
+                                            {/* Zoom controls for images and PDFs */}
+                                            {(isImageFile(previewFile.filename) || isPdfFile(previewFile.filename)) && (
+                                                <>
+                                                    <button
+                                                        onClick={handleZoomOut}
+                                                        disabled={zoom <= 25}
+                                                        className="p-2 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                                        title="Zoom out"
+                                                    >
+                                                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7" />
+                                                        </svg>
+                                                    </button>
+                                                    
+                                                    <span className="text-white/60 text-sm min-w-[60px] text-center">
+                                                        {zoom}%
+                                                    </span>
+                                                    
+                                                    <button
+                                                        onClick={handleZoomIn}
+                                                        disabled={zoom >= 300}
+                                                        className="p-2 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                                        title="Zoom in"
+                                                    >
+                                                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
+                                                        </svg>
+                                                    </button>
+                                                    
+                                                    <button
+                                                        onClick={handleZoomReset}
+                                                        className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                                                        title="Reset zoom"
+                                                    >
+                                                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                                                                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                        </svg>
+                                                    </button>
+
+                                                    <div className="w-px h-6 bg-white/10 mx-2" />
+                                                </>
+                                            )}
+                                            
+                                            <button
+                                                onClick={handleDownload}
+                                                className="px-4 py-2 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 text-sm transition-all flex items-center gap-2"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                                                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                </svg>
+                                                Download
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Preview Content */}
+                                    <div className="flex-1 overflow-auto bg-gradient-to-br from-black/50 to-black/30 p-8">
+                                        {isImageFile(previewFile.filename) && (
+                                            <div className="flex items-center justify-center h-full">
+                                                <img
+                                                    src={previewFile.url}
+                                                    alt={previewFile.filename}
+                                                    style={{ 
+                                                        transform: `scale(${zoom / 100})`,
+                                                        transition: 'transform 0.2s ease-in-out',
+                                                    }}
+                                                    className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                                                />
+                                            </div>
+                                        )}
+                                        
+                                        {isVideoFile(previewFile.filename) && (
+                                            <div className="flex items-center justify-center h-full">
+                                                <video
+                                                    src={previewFile.url}
+                                                    controls
+                                                    className="max-w-full max-h-full rounded-lg shadow-2xl"
+                                                >
+                                                    Your browser does not support the video tag.
+                                                </video>
+                                            </div>
+                                        )}
+                                        
+                                        {isPdfFile(previewFile.filename) && (
+                                            <iframe
+                                                src={previewFile.url}
+                                                title={previewFile.filename}
+                                                style={{ 
+                                                    transform: `scale(${zoom / 100})`,
+                                                    transformOrigin: 'top center',
+                                                    transition: 'transform 0.2s ease-in-out',
+                                                    width: `${100 / (zoom / 100)}%`,
+                                                    height: `${100 / (zoom / 100)}%`,
+                                                }}
+                                                className="rounded-lg shadow-2xl bg-white"
+                                            />
+                                        )}
+                                    </div>
                                 </div>
+                            ) : (
+                                // Show editor for text documents
+                                <TiptapEditor
+                                    ref={editorRef}
+                                    key={selectedDoc.id}
+                                    documentId={selectedDoc.id}
+                                    userName={user?.display_name || user?.username || 'Anonymous'}
+                                    userColor={stableColor}
+                                    readOnly={isReadOnly}
+                                />
                             )}
+                            
+                            <div className="border-t border-white/10 p-4 bg-black/20">
+                                <AttachmentManager documentId={selectedDoc.id} />
+                            </div>
                             {isReadOnly && (
                                 <div className="border-t border-white/10 p-4 bg-yellow-500/10">
                                     <p className="text-yellow-400 text-sm text-center">

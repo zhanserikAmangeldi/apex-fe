@@ -2,6 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import type { AppDocument } from '../types/editor';
 import { FileIcon } from './ui/FileIcon';
 import { FileUpload } from './FileUpload';
+import { FilePreviewModal } from './FilePreviewModal';
+import { isPreviewableFile, getMimeType } from '../utils/fileIcons';
+import { editorApi } from '../services/editorApi';
 
 interface FileTreeProps {
     documents: AppDocument[];

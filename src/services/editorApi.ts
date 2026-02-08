@@ -351,7 +351,8 @@ class EditorApiService {
             throw new Error('Failed to fetch attachments');
         }
 
-        return response.json();
+        const data = await response.json();
+        return data.attachments || [];
     }
 
     async getHealth(): Promise<any> {
