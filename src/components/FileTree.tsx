@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { AppDocument } from '../types/editor';
-import { getFileIcon, getFolderIcon } from '../utils/fileIcons';
+import { FileIcon } from './ui/FileIcon';
 import { FileUpload } from './FileUpload';
 
 interface FileTreeProps {
@@ -345,9 +345,14 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
                 )}
                 {!item.is_folder && <span className="w-4" />}
 
-                <span className={`text-xl flex-shrink-0 transition-transform`}>
-                    {item.icon || (item.is_folder ? getFolderIcon(isOpen) : getFileIcon(item.title, false))}
-                </span>
+                <FileIcon
+                    filename={item.title}
+                    isFolder={item.is_folder}
+                    isOpen={isOpen}
+                    customIcon={item.icon}
+                    size={20}
+                    className="flex-shrink-0"
+                />
 
                 {isEditing ? (
                     <input
