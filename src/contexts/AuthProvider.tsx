@@ -1,7 +1,8 @@
-import {useCallback, useState, useEffect} from "react";
-import type {ApiError, AuthResponse, LoginRequest, RegisterRequest, User} from "../types";
-import {api} from "../services/api.ts";
-import { AuthContext } from "./AuthContext.tsx";
+import { useCallback, useState, useEffect } from "react";
+import type { ApiError, AuthResponse, LoginRequest, RegisterRequest, User } from "../types";
+import { api } from "../services/api";
+import { configureTokenStore } from "../services/httpClient";
+import { AuthContext } from "./AuthContext";
 
 interface AuthProviderProps {
     children: React.ReactNode;
@@ -11,88 +12,67 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [isRefreshing, setIsRefreshing] = useState(false);
 
     const logout = useCallback(() => {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
-        api.setAccessToken(null);
         setUser(null);
         window.location.href = '/login';
     }, []);
 
-    const refreshAccessToken = useCallback(async (): Promise<boolean> => {
-        if (isRefreshing) return false;
-        
-        const refreshToken = localStorage.getItem('refresh_token');
-        if (!refreshToken) {
-            logout();
-            return false;
-        }
-
-        try {
-            setIsRefreshing(true);
-            const response = await api.refreshToken(refreshToken);
-            localStorage.setItem('access_token', response.access_token);
-            localStorage.setItem('refresh_token', response.refresh_token);
-            api.setAccessToken(response.access_token);
-            setUser(response.user);
-            return true;
-        } catch (error) {
-            console.error('Failed to refresh token:', error);
-            logout();
-            return false;
-        } finally {
-            setIsRefreshing(false);
-        }
-    }, [isRefreshing, logout]);
-
+    // Configure the unified httpClient's token store once
     useEffect(() => {
-        // Set up unauthorized handler to try refresh token first
-        api.setUnauthorizedHandler(async () => {
-            console.log('Token expired, attempting to refresh...');
-            const refreshed = await refreshAccessToken();
-            if (!refreshed) {
-                logout();
-            }
+        configureTokenStore({
+            onAuthFailure: () => {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('refresh_token');
+                setUser(null);
+                window.location.href = '/login';
+            },
         });
+    }, []);
 
+    // Load user on mount
+    useEffect(() => {
         const token = localStorage.getItem('access_token');
         const refreshToken = localStorage.getItem('refresh_token');
-        
-        if (token) {
-            api.setAccessToken(token);
-        }
 
         if (token && refreshToken) {
             api.getProfile()
-                .then((user) => {
-                    setUser(user);
+                .then((u) => setUser(u))
+                .catch(() => {
+                    // httpClient already tried refresh — if we're here, it failed
+                    localStorage.removeItem('access_token');
+                    localStorage.removeItem('refresh_token');
+                    setUser(null);
                 })
-                .catch(async () => {
-                    // Try to refresh token
-                    const refreshed = await refreshAccessToken();
-                    if (!refreshed) {
-                        localStorage.removeItem('access_token');
-                        localStorage.removeItem('refresh_token');
-                        api.setAccessToken(null);
-                        setUser(null);
-                    }
-                })
-                .finally(() => {
-                    setIsLoading(false);
-                });
+                .finally(() => setIsLoading(false));
         } else {
             setIsLoading(false);
         }
-    }, [logout, refreshAccessToken]);
+    }, []);
+
+    const refreshAccessToken = useCallback(async (): Promise<boolean> => {
+        const refreshToken = localStorage.getItem('refresh_token');
+        if (!refreshToken) { logout(); return false; }
+
+        try {
+            const response = await api.refreshToken(refreshToken);
+            localStorage.setItem('access_token', response.access_token);
+            localStorage.setItem('refresh_token', response.refresh_token);
+            setUser(response.user);
+            return true;
+        } catch {
+            logout();
+            return false;
+        }
+    }, [logout]);
 
     const clearError = useCallback(() => setError(null), []);
 
     const handleAuthResponse = (response: AuthResponse) => {
         localStorage.setItem('access_token', response.access_token);
         localStorage.setItem('refresh_token', response.refresh_token);
-        api.setAccessToken(response.access_token);
         setUser(response.user);
     };
 
@@ -129,7 +109,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return (
         <AuthContext.Provider value={{
             user,
-            isAuthenticated: !!localStorage.getItem('access_token') ,
+            isAuthenticated: !!localStorage.getItem('access_token'),
             isLoading,
             login,
             register,
