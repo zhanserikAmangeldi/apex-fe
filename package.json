@@ -13,6 +13,7 @@
     "@hocuspocus/provider": "^2.13.0",
     "@tiptap/extension-collaboration": "^2.1.13",
     "@tiptap/extension-collaboration-cursor": "^2.1.13",
+    "@tiptap/extension-highlight": "^2.27.2",
     "@tiptap/extension-image": "^2.1.13",
     "@tiptap/extension-link": "^2.1.13",
     "@tiptap/extension-mention": "^2.27.2",

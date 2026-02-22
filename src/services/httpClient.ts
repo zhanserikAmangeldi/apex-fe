@@ -48,6 +48,7 @@ async function refreshTokens(): Promise<boolean> {
         const response = await fetch(`${API_BASE}auth-service/api/v1/auth/refresh`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include', // sends httpOnly cookie
             body: JSON.stringify({ refresh_token: refreshToken }),
         });
 
@@ -120,7 +121,7 @@ export async function request<T>(endpoint: string, options: RequestOptions = {})
 
     const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
 
-    let response = await fetch(url, { ...fetchOptions, headers });
+    let response = await fetch(url, { ...fetchOptions, headers, credentials: 'include' });
 
     // Auto-retry on 401
     if (response.status === 401 && !skipAuth) {
@@ -128,7 +129,7 @@ export async function request<T>(endpoint: string, options: RequestOptions = {})
         if (refreshed) {
             // Retry with new token
             const newHeaders = buildHeaders(customHeaders);
-            response = await fetch(url, { ...fetchOptions, headers: newHeaders });
+            response = await fetch(url, { ...fetchOptions, headers: newHeaders, credentials: 'include' });
         } else {
             tokenStore.setAccessToken(null);
             tokenStore.setRefreshToken(null);
