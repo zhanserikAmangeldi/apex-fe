@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Logo } from '../components/ui/Logo';
+import { Ellipse } from '../components/ui/Ellipse';
 import { editorApi } from '../services/editorApi';
 import type { Vault, AppDocument } from '../types/editor';
 
@@ -38,21 +40,28 @@ export const SharedWithMePage: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[#0A0A0A] p-6 md:p-8">
-            <div className="max-w-7xl mx-auto">
-                <div className="flex items-center gap-4 mb-6">
-                    <button
-                        onClick={() => navigate('/dashboard')}
-                        className="text-white/60 hover:text-white transition-colors flex items-center gap-2"
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                        Back to Dashboard
-                    </button>
+        <div className="min-h-screen bg-[#0F0F0F] relative overflow-hidden">
+            <Ellipse className="w-96 h-96 top-0 right-0" gradient="linear-gradient(180deg, #530061 0%, #0D0A30 100%)" />
+            <Ellipse className="w-72 h-72 bottom-20 left-10" gradient="linear-gradient(180deg, #190061 0%, #0A1B30 100%)" />
+
+            <header className="relative z-10 px-6 py-4 flex items-center justify-between backdrop-blur-sm bg-black/20 border-b border-white/10">
+                <div className="flex items-center gap-4">
+                    <Logo onClick={() => navigate('/')} />
+                    <div className="h-8 w-px bg-white/20" />
+                    <div>
+                        <h1 className="text-white font-semibold text-lg">Shared with Me</h1>
+                        <p className="text-white/60 text-xs">Vaults and documents shared with you</p>
+                    </div>
                 </div>
-                
-                <h1 className="text-4xl font-bold text-white mb-8">Shared with Me</h1>
+                <button
+                    onClick={() => navigate('/dashboard')}
+                    className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm transition-colors"
+                >
+                    Back to Dashboard
+                </button>
+            </header>
+
+            <div className="relative z-10 max-w-7xl mx-auto p-6 md:p-8">
 
                 {/* Shared Vaults */}
                 <section className="mb-12">

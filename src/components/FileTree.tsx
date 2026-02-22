@@ -1,10 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import type { AppDocument } from '../types/editor';
 import { FileIcon } from './ui/FileIcon';
 import { FileUpload } from './FileUpload';
-import { FilePreviewModal } from './FilePreviewModal';
-import { isPreviewableFile, getMimeType } from '../utils/fileIcons';
-import { editorApi } from '../services/editorApi';
 
 interface FileTreeProps {
     documents: AppDocument[];
@@ -49,6 +47,7 @@ export const FileTree: React.FC<FileTreeProps> = ({
     const handleContextMenu = (e: React.MouseEvent, item: AppDocument) => {
         e.preventDefault();
         e.stopPropagation();
+        console.log('Context menu triggered at:', { clientX: e.clientX, clientY: e.clientY, pageX: e.pageX, pageY: e.pageY });
         setContextMenu({ x: e.clientX, y: e.clientY, item });
     };
 
@@ -172,7 +171,7 @@ export const FileTree: React.FC<FileTreeProps> = ({
                 )}
             </div>
 
-            {contextMenu && (
+            {contextMenu && createPortal(
                 <ContextMenu
                     x={contextMenu.x}
                     y={contextMenu.y}
@@ -191,7 +190,8 @@ export const FileTree: React.FC<FileTreeProps> = ({
                         setContextMenu(null);
                     } : undefined}
                     onClose={() => setContextMenu(null)}
-                />
+                />,
+                document.body
             )}
         </div>
     );
@@ -457,12 +457,56 @@ const ContextMenu: React.FC<{
 }> = ({ x, y, item, onRename, onDelete, onUpload, onClose }) => {
     const [isRenaming, setIsRenaming] = useState(false);
     const [newTitle, setNewTitle] = useState(item.title);
+    const menuRef = useRef<HTMLDivElement>(null);
+    const [position, setPosition] = useState({ x, y });
+
+    // Корректируем позицию после рендера, если меню выходит за границы
+    useEffect(() => {
+        if (menuRef.current) {
+            const menuRect = menuRef.current.getBoundingClientRect();
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+
+            let adjustedX = x;
+            let adjustedY = y;
+
+            console.log('Menu positioning:', { 
+                x, y, 
+                menuWidth: menuRect.width, 
+                menuHeight: menuRect.height,
+                viewportWidth, 
+                viewportHeight 
+            });
+
+            // Если меню выходит за правую границу, показываем слева от курсора
+            if (x + menuRect.width > viewportWidth) {
+                adjustedX = x - menuRect.width;
+            }
+
+            // Если меню выходит за нижнюю границу, показываем выше курсора
+            if (y + menuRect.height > viewportHeight) {
+                adjustedY = y - menuRect.height;
+            }
+
+            // Убеждаемся, что меню не выходит за левую и верхнюю границы
+            adjustedX = Math.max(10, adjustedX);
+            adjustedY = Math.max(10, adjustedY);
+
+            console.log('Adjusted position:', { adjustedX, adjustedY });
+
+            // Обновляем только если позиция изменилась
+            if (adjustedX !== position.x || adjustedY !== position.y) {
+                setPosition({ x: adjustedX, y: adjustedY });
+            }
+        }
+    }, [x, y, position.x, position.y]);
 
     if (isRenaming) {
         return (
             <div
+                ref={menuRef}
                 className="context-menu fixed z-50 bg-black/90 backdrop-blur-xl border border-white/20 rounded-xl shadow-2xl p-3 min-w-[200px]"
-                style={{ left: x, top: y }}
+                style={{ left: position.x, top: position.y }}
                 onClick={(e) => e.stopPropagation()}
             >
                 <input
@@ -500,8 +544,9 @@ const ContextMenu: React.FC<{
 
     return (
         <div
+            ref={menuRef}
             className="context-menu fixed z-50 bg-black/90 backdrop-blur-xl border border-white/20 rounded-xl shadow-2xl py-2 min-w-[180px]"
-            style={{ left: x, top: y }}
+            style={{ left: position.x, top: position.y }}
             onClick={(e) => e.stopPropagation()}
         >
             <div className="px-3 py-2 border-b border-white/10">

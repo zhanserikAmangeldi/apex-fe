@@ -15,23 +15,48 @@ class EditorApiService {
             const refreshToken = localStorage.getItem('refresh_token');
             if (refreshToken) {
                 try {
+                    console.log('Calling api.refreshToken with token:', refreshToken.substring(0, 20) + '...');
                     // Try to refresh the token
                     const authResponse = await api.refreshToken(refreshToken);
+                    console.log('Token refreshed successfully');
                     localStorage.setItem('access_token', authResponse.access_token);
                     localStorage.setItem('refresh_token', authResponse.refresh_token);
                     api.setAccessToken(authResponse.access_token);
                     
                     // Token refreshed, but we can't retry here - let the caller retry
                     throw new Error('TOKEN_REFRESHED');
-                } catch (error) {
-                    console.error('Failed to refresh token in editorApi:', error);
-                    localStorage.removeItem('access_token');
-                    localStorage.removeItem('refresh_token');
-                    api.setAccessToken(null);
-                    window.location.href = '/login';
-                    throw new Error('Unauthorized');
+                } catch (error: any) {
+                    console.error('Failed to refresh token in editorApi:', {
+                        error,
+                        message: error?.message,
+                        stack: error?.stack,
+                        name: error?.name
+                    });
+                    
+                    // Check if it's a network error
+                    const isNetworkError = 
+                        error?.message === 'Failed to fetch' || 
+                        error?.message === 'Load failed' ||
+                        error?.message === 'NetworkError' ||
+                        error?.name === 'TypeError';
+                    
+                    if (isNetworkError) {
+                        console.warn('Network error during token refresh, not redirecting to login');
+                        throw error; // Re-throw to let caller handle
+                    }
+                    
+                    // Only redirect to login if it's an auth error, not a network error
+                    if (error?.message !== 'TOKEN_REFRESHED') {
+                        console.log('Auth error, redirecting to login');
+                        localStorage.removeItem('access_token');
+                        localStorage.removeItem('refresh_token');
+                        api.setAccessToken(null);
+                        window.location.href = '/login';
+                    }
+                    throw error;
                 }
             } else {
+                console.log('No refresh token found, redirecting to login');
                 localStorage.removeItem('access_token');
                 api.setAccessToken(null);
                 window.location.href = '/login';

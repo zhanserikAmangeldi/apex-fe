@@ -14,7 +14,7 @@ export const WelcomePage: React.FC = () => {
             <Ellipse className="w-52 h-52 -bottom-10 -left-10 rotate-[-28deg]" gradient="linear-gradient(180deg, #61004B 0%, #220A30 100%)" />
 
             <header className="flex justify-between items-center p-6 relative z-10">
-                <Logo />
+                <Logo onClick={() => navigate('/')} />
                 <GradientButton
                     onClick={() => navigate('/login')}
                     className="w-fit px-6"

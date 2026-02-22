@@ -85,19 +85,9 @@
     transform: scale(0.98);
 }
 
-/* Context menu animation */
-@keyframes contextMenuIn {
-    from {
-        opacity: 0;
-        transform: scale(0.95) translateY(-5px);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
+/* Context menu - removed animation for instant positioning */
+.context-menu {
+    /* No animation for instant appearance */
 }
 
-.context-menu {
-    animation: contextMenuIn 0.15s ease-out;
-}
 

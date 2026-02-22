@@ -7,7 +7,6 @@ import { useDocuments } from '../hooks/useDocuments';
 import { TiptapEditor } from '../components/TiptapEditor';
 import type { TiptapEditorRef } from '../components/TiptapEditor';
 import { ShareModal } from '../components/ShareModal';
-import { AttachmentManager } from '../components/AttachmentManager';
 import { FileTree } from '../components/FileTree';
 import { TagManager } from '../components/TagManager';
 import { TagDisplay } from '../components/TagDisplay';
@@ -503,7 +502,7 @@ export const WorkspacePage: React.FC = () => {
                                 />
                             )}
                             
-                            <div className="border-t border-white/10 p-4 bg-black/20 space-y-4">
+                            <div className="border-t border-white/10 p-4 bg-black/20">
                                 <div>
                                     <h3 className="text-white/60 text-sm font-medium mb-2">Tags</h3>
                                     <TagDisplay 
@@ -511,10 +510,6 @@ export const WorkspacePage: React.FC = () => {
                                         onManageTags={() => setShowTagManager(true)}
                                         refreshKey={tagRefreshKey}
                                     />
-                                </div>
-                                <div>
-                                    <h3 className="text-white/60 text-sm font-medium mb-2">Attachments</h3>
-                                    <AttachmentManager documentId={selectedDoc.id} />
                                 </div>
                             </div>
                             {isReadOnly && (

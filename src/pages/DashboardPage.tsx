@@ -55,7 +55,7 @@ export const DashboardPage: React.FC = () => {
 
             <header className="relative z-10 px-6 py-4 flex items-center justify-between backdrop-blur-sm bg-black/20">
                 <div className="flex items-center gap-4">
-                    <Logo />
+                    <Logo onClick={() => navigate('/')} />
                     <div className="h-8 w-px bg-white/20" />
                     <div>
                         <h1 className="text-white font-semibold text-lg">Collaborative Editor</h1>

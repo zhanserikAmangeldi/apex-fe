@@ -54,7 +54,7 @@ export const AllDocumentsPage: React.FC = () => {
 
             <header className="relative z-10 px-6 py-4 flex items-center justify-between backdrop-blur-sm bg-black/20 border-b border-white/10">
                 <div className="flex items-center gap-4">
-                    <Logo />
+                    <Logo onClick={() => navigate('/')} />
                     <div className="h-8 w-px bg-white/20" />
                     <div>
                         <h1 className="text-white font-semibold text-lg">All Documents</h1>
@@ -138,7 +138,7 @@ export const AllDocumentsPage: React.FC = () => {
                                         )}
                                     </div>
                                     <button
-                                        onClick={() => navigate(`/workspace/${doc.vault_id}`)}
+                                        onClick={() => navigate(`/workspace/${doc.vault_id}?doc=${doc.id}`)}
                                         className="px-6 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm font-medium transition-all"
                                     >
                                         Open

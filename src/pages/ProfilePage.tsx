@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Ellipse } from '../components/ui/Ellipse';
 import { Logo } from '../components/ui/Logo';
-import { GradientButton } from '../components/ui/Button';
 import { GlassCard } from '../components/ui/GlassCard';
 import { useAuth } from '../hooks/UseAuth';
 import { api } from '../services/api';
@@ -14,6 +13,7 @@ export const ProfilePage: React.FC = () => {
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
     const [sessions, setSessions] = useState<any[]>([]);
     const [showSessions, setShowSessions] = useState(false);
+    const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
     
     const [formData, setFormData] = useState({
         display_name: user?.display_name || '',
@@ -23,10 +23,22 @@ export const ProfilePage: React.FC = () => {
 
     useEffect(() => {
         loadAvatar();
+        
+        // Cleanup function to revoke blob URL when component unmounts
+        return () => {
+            if (avatarUrl) {
+                URL.revokeObjectURL(avatarUrl);
+            }
+        };
     }, []);
 
     const loadAvatar = async () => {
         try {
+            // Очищаем старый blob URL чтобы освободить память
+            if (avatarUrl) {
+                URL.revokeObjectURL(avatarUrl);
+            }
+            
             const blob = await api.getAvatar();
             const url = URL.createObjectURL(blob);
             setAvatarUrl(url);
@@ -46,12 +58,30 @@ export const ProfilePage: React.FC = () => {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            alert('Please select an image file');
+            return;
+        }
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Image size should be less than 5MB');
+            return;
+        }
+
         try {
+            setIsUploadingAvatar(true);
             await api.uploadAvatar(file);
+            // Wait a bit for the server to process
+            await new Promise(resolve => setTimeout(resolve, 500));
             await loadAvatar();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to upload avatar:', error);
-            alert('Failed to upload avatar');
+            const message = error?.message || 'Failed to upload avatar';
+            alert(message);
+        } finally {
+            setIsUploadingAvatar(false);
         }
     };
 
@@ -69,10 +99,20 @@ export const ProfilePage: React.FC = () => {
     const loadSessions = async () => {
         try {
             const data = await api.getActiveSessions();
-            setSessions(data);
+            console.log('Sessions data:', data);
+            // API возвращает объект с полем sessions
+            if (data && Array.isArray(data.sessions)) {
+                setSessions(data.sessions);
+            } else {
+                console.error('Sessions data is not valid:', data);
+                setSessions([]);
+            }
             setShowSessions(true);
         } catch (error) {
             console.error('Failed to load sessions:', error);
+            setSessions([]);
+            setShowSessions(true);
+            alert('Failed to load sessions');
         }
     };
 
@@ -96,7 +136,7 @@ export const ProfilePage: React.FC = () => {
 
             <header className="relative z-10 px-6 py-4 flex items-center justify-between backdrop-blur-sm bg-black/20 border-b border-white/10">
                 <div className="flex items-center gap-4">
-                    <Logo />
+                    <Logo onClick={() => navigate('/')} />
                     <div className="h-8 w-px bg-white/20" />
                     <div>
                         <h1 className="text-white font-semibold text-lg">Profile Settings</h1>
@@ -123,7 +163,12 @@ export const ProfilePage: React.FC = () => {
                 <GlassCard className="p-6">
                     <div className="flex items-start gap-6">
                         <div className="flex flex-col items-center gap-3">
-                            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center overflow-hidden">
+                            <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center overflow-hidden">
+                                {isUploadingAvatar && (
+                                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10">
+                                        <div className="w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                    </div>
+                                )}
                                 {avatarUrl ? (
                                     <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                                 ) : (
@@ -132,15 +177,16 @@ export const ProfilePage: React.FC = () => {
                                     </span>
                                 )}
                             </div>
-                            <label className="cursor-pointer">
+                            <label className={`cursor-pointer ${isUploadingAvatar ? 'opacity-50 pointer-events-none' : ''}`}>
                                 <input
                                     type="file"
                                     accept="image/*"
                                     className="hidden"
                                     onChange={handleAvatarUpload}
+                                    disabled={isUploadingAvatar}
                                 />
                                 <span className="text-purple-400 hover:text-purple-300 text-xs">
-                                    Change Avatar
+                                    {isUploadingAvatar ? 'Uploading...' : 'Change Avatar'}
                                 </span>
                             </label>
                         </div>
@@ -246,13 +292,36 @@ export const ProfilePage: React.FC = () => {
                                 {sessions.length === 0 ? (
                                     <p className="text-white/60 text-sm">No active sessions</p>
                                 ) : (
-                                    sessions.map((session, idx) => (
-                                        <div key={idx} className="p-3 bg-white/5 rounded-lg">
-                                            <p className="text-white text-sm">{session.user_agent || 'Unknown device'}</p>
-                                            <p className="text-white/60 text-xs mt-1">{session.ip_address || 'Unknown IP'}</p>
-                                            <p className="text-white/40 text-xs">
-                                                {new Date(session.created_at).toLocaleString()}
-                                            </p>
+                                    sessions.map((session) => (
+                                        <div 
+                                            key={session.id} 
+                                            className={`p-3 rounded-lg ${
+                                                session.is_current 
+                                                    ? 'bg-purple-500/20 border border-purple-500/50' 
+                                                    : 'bg-white/5'
+                                            }`}
+                                        >
+                                            <div className="flex items-start justify-between">
+                                                <div className="flex-1">
+                                                    <p className="text-white text-sm">
+                                                        {session.user_agent || 'Unknown device'}
+                                                        {session.is_current && (
+                                                            <span className="ml-2 text-xs text-purple-400 font-medium">
+                                                                (Current)
+                                                            </span>
+                                                        )}
+                                                    </p>
+                                                    <p className="text-white/60 text-xs mt-1">
+                                                        {session.ip_address || 'Unknown IP'}
+                                                    </p>
+                                                    <p className="text-white/40 text-xs mt-1">
+                                                        Created: {new Date(session.created_at).toLocaleString()}
+                                                    </p>
+                                                    <p className="text-white/40 text-xs">
+                                                        Expires: {new Date(session.expires_at).toLocaleString()}
+                                                    </p>
+                                                </div>
+                                            </div>
                                         </div>
                                     ))
                                 )}
