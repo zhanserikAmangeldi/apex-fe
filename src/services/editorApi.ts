@@ -3,6 +3,13 @@ import type { AppDocument, CreateDocumentRequest, CreateVaultRequest, Vault } fr
 
 const EDITOR_BASE = 'editor-service/api/v1';
 
+export interface FullTextResult {
+    document_id: string;
+    title: string;
+    snippet: string;
+    match_index: number;
+}
+
 class EditorApiService {
     async getVaults(): Promise<Vault[]> {
         const data = await httpClient.get<any>(`${EDITOR_BASE}/vaults`);
@@ -142,6 +149,11 @@ class EditorApiService {
         await httpClient.delete(`${EDITOR_BASE}/documents/${id}`);
     }
 
+    async getBacklinks(documentId: string): Promise<{ id: string; title: string; icon: string }[]> {
+        const data = await httpClient.get<any>(`${EDITOR_BASE}/documents/${documentId}/backlinks`);
+        return data.backlinks || [];
+    }
+
     async moveDocument(id: string, parentId: string | null): Promise<AppDocument> {
         return httpClient.post<AppDocument>(`${EDITOR_BASE}/documents/${id}/move`, { parentId });
     }
@@ -181,6 +193,13 @@ class EditorApiService {
         if (vaultId) params.append('vaultId', vaultId);
         const data = await httpClient.get<any>(`${EDITOR_BASE}/search/documents?${params}`);
         return data.documents || [];
+    }
+
+    async searchFullText(query: string, vaultId?: string, limit: number = 20): Promise<FullTextResult[]> {
+        const params = new URLSearchParams({ query, limit: limit.toString() });
+        if (vaultId) params.append('vaultId', vaultId);
+        const data = await httpClient.get<any>(`${EDITOR_BASE}/search/fulltext?${params}`);
+        return data.results || [];
     }
 
     // Graph

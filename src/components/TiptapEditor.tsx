@@ -8,6 +8,7 @@ import * as Y from 'yjs';
 import { DocumentLink, createDocumentLinkSuggestion } from './extensions/DocumentLink';
 import { CommentHighlight } from './extensions/CommentHighlight';
 import { CommentsSidebar } from './CommentsSidebar';
+import { EditorToolbar } from './EditorToolbar';
 import { useNavigate } from 'react-router-dom';
 
 interface Props {
@@ -137,6 +138,13 @@ export const TiptapEditor = forwardRef<TiptapEditorRef, Props>(({
                     Comments
                 </button>
             </div>
+
+            {/* Formatting toolbar */}
+            {!readOnly && (
+                <div className="flex-shrink-0 px-6 py-2 bg-black/10 border-b border-white/5">
+                    <EditorToolbar editor={editor} />
+                </div>
+            )}
 
             {/* Content + Comments sidebar */}
             <div className="flex-1 flex overflow-hidden">
