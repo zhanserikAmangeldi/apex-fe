@@ -34,7 +34,7 @@ export const ProfilePage: React.FC = () => {
 
     const loadAvatar = async () => {
         try {
-            // Очищаем старый blob URL чтобы освободить память
+            // Clear old blob URL to free memory
             if (avatarUrl) {
                 URL.revokeObjectURL(avatarUrl);
             }
@@ -100,7 +100,7 @@ export const ProfilePage: React.FC = () => {
         try {
             const data = await api.getActiveSessions();
             console.log('Sessions data:', data);
-            // API возвращает объект с полем sessions
+            // API returns an object with sessions field
             if (data && Array.isArray(data.sessions)) {
                 setSessions(data.sessions);
             } else {

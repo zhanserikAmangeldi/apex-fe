@@ -1,5 +1,5 @@
 import { httpClient, rawRequest, getAccessToken } from './httpClient';
-import type { AppDocument, CreateDocumentRequest, CreateVaultRequest, Vault } from '../types/editor';
+import type { AppDocument, CreateDocumentRequest, CreateVaultRequest, Vault, NoteConnection, ConnectionType } from '../types/editor';
 
 const EDITOR_BASE = 'editor-service/api/v1';
 
@@ -206,6 +206,35 @@ class EditorApiService {
     async getVaultGraph(vaultId: string): Promise<any> {
         const t = Date.now();
         return httpClient.get<any>(`${EDITOR_BASE}/vaults/${vaultId}/graph?t=${t}`);
+    }
+
+    // Connections (Zettelkasten)
+    async getNoteConnections(noteId: string): Promise<NoteConnection[]> {
+        const data = await httpClient.get<any>(`${EDITOR_BASE}/connections/note/${noteId}`);
+        return data.connections || [];
+    }
+
+    async createConnection(sourceNoteId: string, targetNoteId: string, connectionType: ConnectionType = 'related', description?: string, isInline = false): Promise<NoteConnection> {
+        return httpClient.post<NoteConnection>(`${EDITOR_BASE}/connections`, {
+            sourceNoteId, targetNoteId, connectionType, description, isInline,
+        });
+    }
+
+    async updateConnection(id: string, data: { connectionType?: ConnectionType; description?: string }): Promise<NoteConnection> {
+        return httpClient.put<NoteConnection>(`${EDITOR_BASE}/connections/${id}`, data);
+    }
+
+    async deleteConnection(id: string): Promise<void> {
+        await httpClient.delete(`${EDITOR_BASE}/connections/${id}`);
+    }
+
+    async deleteInlineConnection(sourceDocumentId: string, targetDocumentId: string): Promise<void> {
+        await httpClient.delete(`${EDITOR_BASE}/connections/inline/${sourceDocumentId}/${targetDocumentId}`);
+    }
+
+    async getConnectionTypes(): Promise<Array<{ value: string; label: string }>> {
+        const data = await httpClient.get<any>(`${EDITOR_BASE}/connections/types`);
+        return data.types || [];
     }
 }
 

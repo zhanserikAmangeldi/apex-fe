@@ -13,7 +13,7 @@ import { TagDisplay } from '../components/TagDisplay';
 import { GraphView } from '../components/GraphView';
 import { SemanticSearch } from '../components/SemanticSearch';
 import { RelatedNotes } from '../components/RelatedNotes';
-import { Backlinks } from '../components/Backlinks';
+import { NoteConnections } from '../components/NoteConnections';
 import { editorApi } from '../services/editorApi';
 import { isPreviewableFile, getMimeType, isImageFile, isVideoFile, isPdfFile } from '../utils/fileIcons';
 import type { AppDocument, Vault } from '../types/editor';
@@ -356,33 +356,40 @@ export const WorkspacePage: React.FC = () => {
                     backdrop-blur-sm bg-black/20 border-r border-white/10 flex flex-col overflow-hidden`}
                 >
                     {!sidebarCollapsed && (
-                        <>
-                            <FileTree
-                                documents={documents}
-                                selectedDoc={selectedDoc}
-                                vaultId={vaultId!}
-                                onSelect={handleSelectDocument}
-                                onDelete={isReadOnly ? () => {} : handleDeleteDocument}
-                                onMove={isReadOnly ? () => {} : handleMoveDocument}
-                                onRename={isReadOnly ? () => {} : handleRenameDocument}
-                                onCreate={isReadOnly ? () => {} : () => setShowCreateModal(true)}
-                                onRefresh={refetch}
-                            />
-                            <RelatedNotes
-                                documentId={selectedDoc?.id}
-                                onSelectDocument={(docId) => {
-                                    const doc = documents.find(d => d.id === docId);
-                                    if (doc) handleSelectDocument(doc);
-                                }}
-                            />
-                            <Backlinks
-                                documentId={selectedDoc?.id}
-                                onSelectDocument={(docId) => {
-                                    const doc = documents.find(d => d.id === docId);
-                                    if (doc) handleSelectDocument(doc);
-                                }}
-                            />
-                        </>
+                        <div className="flex flex-col h-full overflow-hidden">
+                            <div className="flex-1 min-h-0 overflow-hidden">
+                                <FileTree
+                                    documents={documents}
+                                    selectedDoc={selectedDoc}
+                                    vaultId={vaultId!}
+                                    onSelect={handleSelectDocument}
+                                    onDelete={isReadOnly ? () => {} : handleDeleteDocument}
+                                    onMove={isReadOnly ? () => {} : handleMoveDocument}
+                                    onRename={isReadOnly ? () => {} : handleRenameDocument}
+                                    onCreate={isReadOnly ? () => {} : () => setShowCreateModal(true)}
+                                    onRefresh={refetch}
+                                />
+                            </div>
+                            <div className="max-h-[200px] overflow-y-auto custom-scrollbar shrink-0">
+                                <RelatedNotes
+                                    documentId={selectedDoc?.id}
+                                    onSelectDocument={(docId) => {
+                                        const doc = documents.find(d => d.id === docId);
+                                        if (doc) handleSelectDocument(doc);
+                                    }}
+                                />
+                            </div>
+                            <div className="max-h-[280px] overflow-y-auto custom-scrollbar shrink-0">
+                                <NoteConnections
+                                    documentId={selectedDoc?.id}
+                                    vaultId={vaultId}
+                                    onSelectDocument={(docId) => {
+                                        const doc = documents.find(d => d.id === docId);
+                                        if (doc) handleSelectDocument(doc);
+                                    }}
+                                />
+                            </div>
+                        </div>
                     )}
                 </aside>
 
@@ -644,7 +651,7 @@ const CreateDocumentModal: React.FC<{
             <div onClick={e => e.stopPropagation()} className="max-w-xl w-full">
                 <GlassCard>
                     <div className="p-10">
-                        <h2 className="text-3xl font-semibold text-white mb-8">Создать новый элемент</h2>
+                        <h2 className="text-3xl font-semibold text-white mb-8">Create New Item</h2>
                         <div className="space-y-6">
                             <div className="grid grid-cols-2 gap-4">
                                 <button
@@ -656,8 +663,8 @@ const CreateDocumentModal: React.FC<{
                                     }`}
                                 >
                                     <div className="text-5xl mb-3">📄</div>
-                                    <p className="text-white font-medium text-lg">Документ</p>
-                                    <p className="text-white/60 text-sm mt-2">Файл для редактирования</p>
+                                    <p className="text-white font-medium text-lg">Document</p>
+                                    <p className="text-white/60 text-sm mt-2">A file for editing</p>
                                 </button>
                                 <button
                                     onClick={() => setForm(p => ({ ...p, is_folder: true }))}
@@ -668,19 +675,19 @@ const CreateDocumentModal: React.FC<{
                                     }`}
                                 >
                                     <div className="text-5xl mb-3">📁</div>
-                                    <p className="text-white font-medium text-lg">Папка</p>
-                                    <p className="text-white/60 text-sm mt-2">Для организации файлов</p>
+                                    <p className="text-white font-medium text-lg">Folder</p>
+                                    <p className="text-white/60 text-sm mt-2">Organize your files</p>
                                 </button>
                             </div>
                             <div>
                                 <label className="block text-white/80 text-base mb-3 font-medium">
-                                    Название {form.is_folder ? 'папки' : 'документа'}
+                                    {form.is_folder ? 'Folder' : 'Document'} name
                                 </label>
                                 <input
                                     type="text"
                                     value={form.title}
                                     onChange={(e) => setForm(p => ({ ...p, title: e.target.value }))}
-                                    placeholder={form.is_folder ? "Моя папка..." : "Мой документ..."}
+                                    placeholder={form.is_folder ? "My folder..." : "My document..."}
                                     className="w-full px-6 py-4 text-lg rounded-2xl bg-white/10 border border-white/20 text-white placeholder:text-white/40 outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
                                     autoFocus
                                     onKeyDown={(e) => {
@@ -695,7 +702,7 @@ const CreateDocumentModal: React.FC<{
                                     onClick={onClose} 
                                     className="flex-1 px-6 py-4 rounded-2xl bg-white/10 text-white hover:bg-white/15 transition-all text-lg"
                                 >
-                                    Отмена
+                                    Cancel
                                 </button>
                                 <GradientButton 
                                     variant="blue" 
@@ -703,7 +710,7 @@ const CreateDocumentModal: React.FC<{
                                     className="flex-1 py-4 text-lg"
                                     disabled={!form.title.trim()}
                                 >
-                                    Создать
+                                    Create
                                 </GradientButton>
                             </div>
                         </div>

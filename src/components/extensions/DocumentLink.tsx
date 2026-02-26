@@ -2,7 +2,7 @@ import { Node, mergeAttributes } from '@tiptap/core';
 import { ReactRenderer } from '@tiptap/react';
 import type { SuggestionOptions } from '@tiptap/suggestion';
 import Suggestion from '@tiptap/suggestion';
-import { PluginKey } from '@tiptap/pm/state';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
 import tippy, { type Instance as TippyInstance } from 'tippy.js';
 import { DocumentLinkList } from './DocumentLinkList.tsx';
 import { editorApi } from '../../services/editorApi';
@@ -13,6 +13,7 @@ export interface DocumentLinkOptions {
     renderLabel: (props: { node: any }) => string;
     suggestion: Omit<SuggestionOptions, 'editor'>;
     vaultId?: string;
+    sourceDocumentId?: string;
     onNavigate?: (documentId: string) => void;
 }
 
@@ -58,6 +59,7 @@ export const DocumentLink = Node.create<DocumentLinkOptions>({
                 },
             },
             vaultId: undefined,
+            sourceDocumentId: undefined,
             onNavigate: undefined,
         };
     },
@@ -212,7 +214,6 @@ export const DocumentLink = Node.create<DocumentLinkOptions>({
                             const doc = docs.find(d => d.title === docTitle) || docs[0];
                             
                             if (doc) {
-                                console.log('DocumentLink: Found document, creating link', doc);
                                 const from = $from.pos - fullMatch.length;
                                 const to = $from.pos;
                                 
@@ -229,6 +230,14 @@ export const DocumentLink = Node.create<DocumentLinkOptions>({
                                         },
                                     })
                                     .run();
+
+                                // Create inline connection
+                                const srcId = this.options.sourceDocumentId;
+                                if (srcId && doc.id) {
+                                    editorApi.createConnection(srcId, doc.id, 'references', undefined, true)
+                                        .then(() => window.dispatchEvent(new Event('connections-changed')))
+                                        .catch(() => {});
+                                }
                             } else {
                                 console.log('DocumentLink: No document found');
                             }
@@ -251,32 +260,70 @@ export const DocumentLink = Node.create<DocumentLinkOptions>({
     },
 
     addProseMirrorPlugins() {
+        const sourceDocumentId = this.options.sourceDocumentId;
+        const nodeName = this.name;
+
         return [
             Suggestion({
                 editor: this.editor,
                 ...this.options.suggestion,
+            }),
+            // Track removed documentLink nodes and delete their connections
+            new Plugin({
+                key: new PluginKey('documentLinkTracker'),
+                appendTransaction(transactions, oldState, newState) {
+                    if (!sourceDocumentId) return null;
+
+                    // Only process if document actually changed
+                    const docChanged = transactions.some(tr => tr.docChanged);
+                    if (!docChanged) return null;
+
+                    // Collect link IDs from old and new state
+                    const oldLinks = new Set<string>();
+                    const newLinks = new Set<string>();
+
+                    oldState.doc.descendants(node => {
+                        if (node.type.name === nodeName && node.attrs.id) {
+                            oldLinks.add(node.attrs.id);
+                        }
+                    });
+
+                    newState.doc.descendants(node => {
+                        if (node.type.name === nodeName && node.attrs.id) {
+                            newLinks.add(node.attrs.id);
+                        }
+                    });
+
+                    // Find removed links
+                    for (const id of oldLinks) {
+                        if (!newLinks.has(id)) {
+                            editorApi.deleteInlineConnection(sourceDocumentId, id)
+                                .then(() => window.dispatchEvent(new Event('connections-changed')))
+                                .catch(() => {});
+                        }
+                    }
+
+                    return null;
+                },
             }),
         ];
     },
 });
 
 export function createDocumentLinkSuggestion(
-    vaultId: string | undefined
+    vaultId: string | undefined,
+    sourceDocumentId?: string,
 ): Omit<SuggestionOptions, 'editor'> {
     return {
         char: '[[',
         
         items: async ({ query }) => {
             if (!vaultId) {
-                console.log('DocumentLink: No vaultId provided');
                 return [];
             }
             
-            console.log('DocumentLink: Searching for documents', { query, vaultId });
-            
             try {
                 const documents = await editorApi.searchDocuments(query, vaultId, 10);
-                console.log('DocumentLink: Found documents', documents);
                 return documents.map((doc: AppDocument) => ({
                     id: doc.id,
                     label: doc.title,
@@ -357,10 +404,28 @@ export function createDocumentLinkSuggestion(
                 .insertContentAt(range, [
                     {
                         type: 'documentLink',
-                        attrs: props,
+                        attrs: {
+                            id: props.id,
+                            label: props.label,
+                        },
                     },
                 ])
                 .run();
+
+            // Create connection in the background
+            if (sourceDocumentId && props.id && props.connectionType) {
+                editorApi.createConnection(
+                    sourceDocumentId,
+                    props.id,
+                    props.connectionType,
+                    undefined,
+                    true, // isInline
+                ).then(() => {
+                    window.dispatchEvent(new Event('connections-changed'));
+                }).catch(() => {
+                    // Connection may already exist — that's fine
+                });
+            }
         },
 
         allow: ({ state, range }) => {

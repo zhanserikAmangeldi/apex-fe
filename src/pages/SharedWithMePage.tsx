@@ -68,7 +68,6 @@ export const SharedWithMePage: React.FC = () => {
                     <h2 className="text-2xl font-semibold text-white mb-6">Vaults</h2>
                     {sharedVaults.length === 0 ? (
                         <div className="bg-white/5 border border-white/10 rounded-xl p-12 text-center">
-                            <div className="text-5xl mb-4">📦</div>
                             <p className="text-white/60">No vaults shared with you yet</p>
                         </div>
                     ) : (
@@ -103,7 +102,6 @@ export const SharedWithMePage: React.FC = () => {
                     <h2 className="text-2xl font-semibold text-white mb-6">Documents</h2>
                     {sharedDocuments.length === 0 ? (
                         <div className="bg-white/5 border border-white/10 rounded-xl p-12 text-center">
-                            <div className="text-5xl mb-4">📄</div>
                             <p className="text-white/60">No documents shared with you yet</p>
                         </div>
                     ) : (

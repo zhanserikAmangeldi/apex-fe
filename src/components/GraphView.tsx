@@ -35,8 +35,10 @@ interface GraphEdge {
     id: string;
     source: string;
     target: string;
-    type: 'hierarchy' | 'document-link' | 'tag';
+    type: 'hierarchy' | 'document-link' | 'tag' | 'connection';
     tagId?: string;
+    connectionType?: string;
+    description?: string;
 }
 
 interface GraphData {
@@ -48,6 +50,7 @@ interface GraphData {
         hierarchyEdges: number;
         documentLinkEdges: number;
         tagEdges: number;
+        connectionEdges: number;
     };
 }
 
@@ -55,6 +58,7 @@ const edgeTypes = {
     hierarchy: { color: '#94a3b8', strokeWidth: 2, style: 'solid' },
     'document-link': { color: '#8b5cf6', strokeWidth: 3, style: 'solid' },
     tag: { color: '#10b981', strokeWidth: 1, style: 'dashed' },
+    connection: { color: '#f59e0b', strokeWidth: 2, style: 'solid' },
 };
 
 export function GraphView({ vaultId, onNodeClick, onClose }: GraphViewProps) {
@@ -67,6 +71,7 @@ export function GraphView({ vaultId, onNodeClick, onClose }: GraphViewProps) {
         showHierarchy: true,
         showDocumentLinks: true,
         showTags: true,
+        showConnections: true,
     });
     const [topicClusters, setTopicClusters] = useState<TopicCluster[]>([]);
     const [showTopics, setShowTopics] = useState(false);
@@ -142,24 +147,22 @@ export function GraphView({ vaultId, onNodeClick, onClose }: GraphViewProps) {
             });
 
             const flowEdges: Edge[] = data.edges.map(edge => {
-                const edgeStyle = edgeTypes[edge.type];
+                const edgeStyle = edgeTypes[edge.type] || edgeTypes.connection;
                 return {
                     id: edge.id,
                     source: edge.source,
                     target: edge.target,
                     type: 'smoothstep',
-                    animated: edge.type === 'document-link',
+                    animated: edge.type === 'document-link' || edge.type === 'connection',
                     style: {
                         stroke: edgeStyle.color,
                         strokeWidth: edgeStyle.strokeWidth,
                         strokeDasharray: edgeStyle.style === 'dashed' ? '5,5' : undefined,
                     },
                     markerEnd: {
-                        type: edge.type === 'document-link' ? MarkerType.ArrowClosed : MarkerType.Arrow,
+                        type: (edge.type === 'document-link' || edge.type === 'connection') ? MarkerType.ArrowClosed : MarkerType.Arrow,
                         color: edgeStyle.color,
                     },
-                    label: edge.type === 'document-link' ? '🔗' : undefined,
-                    labelStyle: { fontSize: 16 },
                 };
             });
 
@@ -187,28 +190,27 @@ export function GraphView({ vaultId, onNodeClick, onClose }: GraphViewProps) {
                 if (edge.type === 'hierarchy' && !filter.showHierarchy) return false;
                 if (edge.type === 'document-link' && !filter.showDocumentLinks) return false;
                 if (edge.type === 'tag' && !filter.showTags) return false;
+                if (edge.type === 'connection' && !filter.showConnections) return false;
                 return true;
             });
 
             const flowEdges: Edge[] = filteredEdges.map(edge => {
-                const edgeStyle = edgeTypes[edge.type];
+                const edgeStyle = edgeTypes[edge.type] || edgeTypes.connection;
                 return {
                     id: edge.id,
                     source: edge.source,
                     target: edge.target,
                     type: 'smoothstep',
-                    animated: edge.type === 'document-link',
+                    animated: edge.type === 'document-link' || edge.type === 'connection',
                     style: {
                         stroke: edgeStyle.color,
                         strokeWidth: edgeStyle.strokeWidth,
                         strokeDasharray: edgeStyle.style === 'dashed' ? '5,5' : undefined,
                     },
                     markerEnd: {
-                        type: edge.type === 'document-link' ? MarkerType.ArrowClosed : MarkerType.Arrow,
+                        type: (edge.type === 'document-link' || edge.type === 'connection') ? MarkerType.ArrowClosed : MarkerType.Arrow,
                         color: edgeStyle.color,
                     },
-                    label: edge.type === 'document-link' ? '🔗' : undefined,
-                    labelStyle: { fontSize: 16 },
                 };
             });
 
@@ -322,6 +324,17 @@ export function GraphView({ vaultId, onNodeClick, onClose }: GraphViewProps) {
                             <span className="filter-color" style={{ background: '#10b981' }}></span>
                             Tags ({stats?.tagEdges || 0})
                         </label>
+                        <label className="filter-checkbox">
+                            <input
+                                type="checkbox"
+                                checked={filter.showConnections}
+                                onChange={(e) =>
+                                    setFilter({ ...filter, showConnections: e.target.checked })
+                                }
+                            />
+                            <span className="filter-color" style={{ background: '#f59e0b' }}></span>
+                            Connections ({stats?.connectionEdges || 0})
+                        </label>
                     </div>
 
                     <div className="graph-legend">
@@ -337,6 +350,10 @@ export function GraphView({ vaultId, onNodeClick, onClose }: GraphViewProps) {
                         <div className="legend-item">
                             <div className="legend-line" style={{ borderTop: '1px dashed #10b981' }}></div>
                             <span>Same Tag</span>
+                        </div>
+                        <div className="legend-item">
+                            <div className="legend-line" style={{ borderTop: '2px solid #f59e0b' }}></div>
+                            <span>Zettelkasten Link</span>
                         </div>
                     </div>
 

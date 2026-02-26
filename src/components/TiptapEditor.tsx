@@ -63,8 +63,9 @@ export const TiptapEditor = forwardRef<TiptapEditorRef, Props>(({
             Collaboration.configure({ document: ydoc }),
             CommentHighlight,
             DocumentLink.configure({
-                suggestion: createDocumentLinkSuggestion(vaultId),
+                suggestion: createDocumentLinkSuggestion(vaultId, documentId),
                 vaultId: vaultId,
+                sourceDocumentId: documentId,
                 HTMLAttributes: { class: 'document-link' },
             }),
             ...(provider ? [CollaborationCursor.configure({
