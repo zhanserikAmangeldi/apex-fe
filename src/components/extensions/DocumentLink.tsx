@@ -46,14 +46,8 @@ export const DocumentLink = Node.create<DocumentLinkOptions>({
                                 type: this.name,
                                 attrs: props,
                             },
-                            {
-                                type: 'text',
-                                text: ' ',
-                            },
                         ])
                         .run();
-
-                    window.getSelection()?.collapseToEnd();
                 },
                 allow: ({ state, range }) => {
                     const $from = state.doc.resolve(range.from);
@@ -234,7 +228,6 @@ export const DocumentLink = Node.create<DocumentLinkOptions>({
                                             customText: customText || null,
                                         },
                                     })
-                                    .insertContent('] ')
                                     .run();
                             } else {
                                 console.log('DocumentLink: No document found');
@@ -366,14 +359,8 @@ export function createDocumentLinkSuggestion(
                         type: 'documentLink',
                         attrs: props,
                     },
-                    {
-                        type: 'text',
-                        text: ' ',
-                    },
                 ])
                 .run();
-
-            window.getSelection()?.collapseToEnd();
         },
 
         allow: ({ state, range }) => {

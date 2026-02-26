@@ -11,6 +11,9 @@ import { FileTree } from '../components/FileTree';
 import { TagManager } from '../components/TagManager';
 import { TagDisplay } from '../components/TagDisplay';
 import { GraphView } from '../components/GraphView';
+import { SemanticSearch } from '../components/SemanticSearch';
+import { RelatedNotes } from '../components/RelatedNotes';
+import { Backlinks } from '../components/Backlinks';
 import { editorApi } from '../services/editorApi';
 import { isPreviewableFile, getMimeType, isImageFile, isVideoFile, isPdfFile } from '../utils/fileIcons';
 import type { AppDocument, Vault } from '../types/editor';
@@ -30,6 +33,7 @@ export const WorkspacePage: React.FC = () => {
     const [showShareModal, setShowShareModal] = useState(false);
     const [showTagManager, setShowTagManager] = useState(false);
     const [showGraphView, setShowGraphView] = useState(false);
+    const [showAISearch, setShowAISearch] = useState(false);
     const [tagRefreshKey, setTagRefreshKey] = useState(0);
     const [vault, setVault] = useState<Vault | null>(null);
     const [previewFile, setPreviewFile] = useState<{ url: string; filename: string; mimeType: string } | null>(null);
@@ -309,7 +313,20 @@ export const WorkspacePage: React.FC = () => {
                                     Share
                                 </button>
                             </>
-                        )}
+                        )}                        <button
+                            onClick={() => setShowAISearch(prev => !prev)}
+                            className={`px-4 py-2 rounded-lg text-sm transition-all flex items-center gap-2 ${
+                                showAISearch
+                                    ? 'bg-indigo-500/30 text-indigo-200 ring-1 ring-indigo-500/50'
+                                    : 'bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300'
+                            }`}
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                            </svg>
+                            AI Search
+                        </button>
                         {vaultId && (
                             <button
                                 onClick={() => setShowGraphView(true)}
@@ -339,17 +356,33 @@ export const WorkspacePage: React.FC = () => {
                     backdrop-blur-sm bg-black/20 border-r border-white/10 flex flex-col overflow-hidden`}
                 >
                     {!sidebarCollapsed && (
-                        <FileTree
-                            documents={documents}
-                            selectedDoc={selectedDoc}
-                            vaultId={vaultId!}
-                            onSelect={handleSelectDocument}
-                            onDelete={isReadOnly ? () => {} : handleDeleteDocument}
-                            onMove={isReadOnly ? () => {} : handleMoveDocument}
-                            onRename={isReadOnly ? () => {} : handleRenameDocument}
-                            onCreate={isReadOnly ? () => {} : () => setShowCreateModal(true)}
-                            onRefresh={refetch}
-                        />
+                        <>
+                            <FileTree
+                                documents={documents}
+                                selectedDoc={selectedDoc}
+                                vaultId={vaultId!}
+                                onSelect={handleSelectDocument}
+                                onDelete={isReadOnly ? () => {} : handleDeleteDocument}
+                                onMove={isReadOnly ? () => {} : handleMoveDocument}
+                                onRename={isReadOnly ? () => {} : handleRenameDocument}
+                                onCreate={isReadOnly ? () => {} : () => setShowCreateModal(true)}
+                                onRefresh={refetch}
+                            />
+                            <RelatedNotes
+                                documentId={selectedDoc?.id}
+                                onSelectDocument={(docId) => {
+                                    const doc = documents.find(d => d.id === docId);
+                                    if (doc) handleSelectDocument(doc);
+                                }}
+                            />
+                            <Backlinks
+                                documentId={selectedDoc?.id}
+                                onSelectDocument={(docId) => {
+                                    const doc = documents.find(d => d.id === docId);
+                                    if (doc) handleSelectDocument(doc);
+                                }}
+                            />
+                        </>
                     )}
                 </aside>
 
@@ -532,6 +565,24 @@ export const WorkspacePage: React.FC = () => {
                         </div>
                     )}
                 </main>
+
+                {showAISearch && (
+                    <aside className="flex-shrink-0 w-80 backdrop-blur-sm bg-black/20 border-l border-white/10 overflow-hidden">
+                        <SemanticSearch
+                            vaultId={vaultId}
+                            onSelectDocument={(docId) => {
+                                const doc = documents.find(d => d.id === docId);
+                                if (doc) {
+                                    handleSelectDocument(doc);
+                                } else {
+                                    // Document might be in another vault — navigate via URL
+                                    navigate(`/workspace/${vaultId}?doc=${docId}`);
+                                }
+                            }}
+                            onClose={() => setShowAISearch(false)}
+                        />
+                    </aside>
+                )}
             </div>
 
             {showCreateModal && (

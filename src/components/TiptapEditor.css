@@ -149,3 +149,17 @@
     color: #c4b5fd;
     border-color: rgba(167, 139, 250, 0.4);
 }
+
+/* Comment Highlight Styles */
+.ProseMirror mark.comment-highlight {
+    background-color: rgba(251, 191, 36, 0.2);
+    border-bottom: 2px solid rgba(251, 191, 36, 0.5);
+    padding: 1px 0;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    color: inherit;
+}
+
+.ProseMirror mark.comment-highlight:hover {
+    background-color: rgba(251, 191, 36, 0.35);
+}

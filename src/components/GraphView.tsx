@@ -12,6 +12,8 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { editorApi } from '../services/editorApi';
+import { aiApi } from '../services/aiApi';
+import type { TopicCluster } from '../services/aiApi';
 import './GraphView.css';
 
 interface GraphViewProps {
@@ -66,6 +68,9 @@ export function GraphView({ vaultId, onNodeClick, onClose }: GraphViewProps) {
         showDocumentLinks: true,
         showTags: true,
     });
+    const [topicClusters, setTopicClusters] = useState<TopicCluster[]>([]);
+    const [showTopics, setShowTopics] = useState(false);
+    const [topicsLoading, setTopicsLoading] = useState(false);
 
     const loadGraph = useCallback(async () => {
         try {
@@ -85,6 +90,17 @@ export function GraphView({ vaultId, onNodeClick, onClose }: GraphViewProps) {
                 // Calculate position in a circular layout
                 const angle = (index / data.nodes.length) * 2 * Math.PI;
                 const radius = Math.max(300, data.nodes.length * 20);
+
+                // Find topic cluster color for this node
+                let clusterColor: string | null = null;
+                if (showTopics && topicClusters.length > 0) {
+                    for (const cluster of topicClusters) {
+                        if (cluster.documents.find(d => d.document_id === node.id)) {
+                            clusterColor = cluster.color;
+                            break;
+                        }
+                    }
+                }
                 
                 return {
                     id: node.id,
@@ -115,8 +131,8 @@ export function GraphView({ vaultId, onNodeClick, onClose }: GraphViewProps) {
                         ),
                     },
                     style: {
-                        background: node.isFolder ? '#1e293b' : '#0f172a',
-                        border: `2px solid ${node.tags[0]?.color || '#475569'}`,
+                        background: clusterColor ? `${clusterColor}20` : (node.isFolder ? '#1e293b' : '#0f172a'),
+                        border: `2px solid ${clusterColor || node.tags[0]?.color || '#475569'}`,
                         borderRadius: '12px',
                         padding: '10px',
                         width: 'auto',
@@ -156,7 +172,7 @@ export function GraphView({ vaultId, onNodeClick, onClose }: GraphViewProps) {
         } finally {
             setLoading(false);
         }
-    }, [vaultId, setNodes, setEdges]);
+    }, [vaultId, setNodes, setEdges, showTopics, topicClusters]);
 
     useEffect(() => {
         loadGraph();
@@ -322,6 +338,53 @@ export function GraphView({ vaultId, onNodeClick, onClose }: GraphViewProps) {
                             <div className="legend-line" style={{ borderTop: '1px dashed #10b981' }}></div>
                             <span>Same Tag</span>
                         </div>
+                    </div>
+
+                    <div className="graph-topics" style={{ marginTop: '12px' }}>
+                        <button
+                            onClick={async () => {
+                                if (showTopics) {
+                                    setShowTopics(false);
+                                    setTopicClusters([]);
+                                } else {
+                                    try {
+                                        setTopicsLoading(true);
+                                        const data = await aiApi.getTopicClusters();
+                                        setTopicClusters(data.clusters);
+                                        setShowTopics(true);
+                                    } catch (err) {
+                                        console.error('Failed to load topic clusters:', err);
+                                    } finally {
+                                        setTopicsLoading(false);
+                                    }
+                                }
+                            }}
+                            disabled={topicsLoading}
+                            style={{
+                                width: '100%',
+                                padding: '6px 10px',
+                                borderRadius: '6px',
+                                border: showTopics ? '1px solid #8b5cf6' : '1px solid #475569',
+                                background: showTopics ? '#8b5cf620' : 'transparent',
+                                color: showTopics ? '#c4b5fd' : '#94a3b8',
+                                fontSize: '12px',
+                                cursor: topicsLoading ? 'wait' : 'pointer',
+                            }}
+                        >
+                            {topicsLoading ? 'Loading...' : showTopics ? '✨ Topics ON' : '✨ Color by Topic'}
+                        </button>
+                        {showTopics && topicClusters.length > 0 && (
+                            <div style={{ marginTop: '8px' }}>
+                                {topicClusters.map(cluster => (
+                                    <div key={cluster.cluster_id} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                                        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: cluster.color, flexShrink: 0 }} />
+                                        <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                                            {cluster.documents.length} docs
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </Panel>
             </ReactFlow>
