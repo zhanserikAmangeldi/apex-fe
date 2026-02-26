@@ -49,16 +49,13 @@ export const WorkspacePage: React.FC = () => {
         refetch,
     } = useDocuments(vaultId);
 
-    // Load vault info to check permissions
     useEffect(() => {
         const loadVault = async () => {
             if (vaultId) {
                 try {
                     const vaultData = await editorApi.getVault(vaultId);
                     setVault(vaultData);
-                    console.log('Vault loaded:', vaultData);
                 } catch (error) {
-                    console.error('Failed to load vault:', error);
                 }
             }
         };
@@ -70,41 +67,27 @@ export const WorkspacePage: React.FC = () => {
         return colors[Math.floor(Math.random() * colors.length)];
     }, []);
 
-    // Determine if user has read-only access to selected document
     const isReadOnly = useMemo(() => {
-        // If no document selected, use vault permissions
         if (!selectedDoc) {
             return vault?.user_permission === 'read';
         }
         
-        // If document has user_permission, use it (direct document permissions or inherited from vault)
         if (selectedDoc.user_permission) {
             return selectedDoc.user_permission === 'read';
         }
         
-        // Fallback to vault permissions
         return vault?.user_permission === 'read';
     }, [vault, selectedDoc]);
-
-    console.log('Workspace permissions:', {
-        vaultId,
-        vault_permission: vault?.user_permission,
-        selectedDocId: selectedDoc?.id,
-        doc_permission: selectedDoc?.user_permission,
-        isReadOnly
-    });
 
     const handleSelectDocument = useCallback(async (doc: AppDocument) => {
         if (!doc.is_folder) {
             setSelectedDoc(doc);
-            setPreviewFile(null); // Reset preview
-            setZoom(100); // Reset zoom
+            setPreviewFile(null);
+            setZoom(100);
             
-            // Check if document has attachments
             try {
                 const attachments = await editorApi.getDocumentAttachments(doc.id);
                 
-                // If document has a previewable attachment with same name, prepare preview
                 if (attachments.length > 0) {
                     const mainAttachment = attachments.find((att: any) => 
                         att.filename === doc.title || isPreviewableFile(att.filename)
@@ -115,7 +98,6 @@ export const WorkspacePage: React.FC = () => {
                         const token = localStorage.getItem('access_token');
                         const urlWithToken = `${downloadUrl}?token=${encodeURIComponent(token || '')}`;
                         
-                        // Set preview data but don't open modal
                         setPreviewFile({
                             url: urlWithToken,
                             filename: mainAttachment.filename,
@@ -124,27 +106,16 @@ export const WorkspacePage: React.FC = () => {
                     }
                 }
             } catch (error) {
-                console.error('Failed to load attachments:', error);
             }
         }
     }, []);
 
-    // Handle doc query parameter for navigation from links
     useEffect(() => {
         const docId = searchParams.get('doc');
         
-        console.log('WorkspacePage: Checking doc parameter', { 
-            docId, 
-            documentsCount: documents.length,
-            search: location.search 
-        });
-        
         if (docId && documents.length > 0) {
             const doc = documents.find(d => d.id === docId);
-            console.log('WorkspacePage: Found document', doc);
             if (doc && !doc.is_folder) {
-                console.log('WorkspacePage: Selecting document from link', doc);
-                // Use handleSelectDocument to properly load attachments and preview
                 handleSelectDocument(doc);
             }
         }
@@ -169,7 +140,6 @@ export const WorkspacePage: React.FC = () => {
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
         } catch (error) {
-            console.error('Download failed:', error);
             alert('Failed to download file');
         }
     };
@@ -178,10 +148,8 @@ export const WorkspacePage: React.FC = () => {
         if (!selectedDoc || !editorRef.current) return;
         
         try {
-            // Get markdown content from editor
             const markdown = editorRef.current.getMarkdown();
             
-            // Sanitize filename: remove .md extension if exists, clean name, add .md back
             let filename = selectedDoc.title;
             if (filename.endsWith('.md')) {
                 filename = filename.slice(0, -3);
@@ -198,7 +166,6 @@ export const WorkspacePage: React.FC = () => {
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
         } catch (error) {
-            console.error('Export failed:', error);
             alert('Failed to export document');
         }
     };
@@ -412,7 +379,6 @@ export const WorkspacePage: React.FC = () => {
                     {selectedDoc && !selectedDoc.is_folder ? (
                         <div className="flex-1 flex flex-col overflow-hidden">
                             {previewFile ? (
-                                // Show inline preview instead of editor
                                 <div className="flex-1 flex flex-col overflow-hidden">
                                     {/* Preview Header */}
                                     <div className="flex items-center justify-between px-6 py-4 bg-black/40 border-b border-white/10">
@@ -530,7 +496,6 @@ export const WorkspacePage: React.FC = () => {
                                     </div>
                                 </div>
                             ) : (
-                                // Show editor for text documents
                                 <TiptapEditor
                                     ref={editorRef}
                                     key={selectedDoc.id}
@@ -582,7 +547,6 @@ export const WorkspacePage: React.FC = () => {
                                 if (doc) {
                                     handleSelectDocument(doc);
                                 } else {
-                                    // Document might be in another vault — navigate via URL
                                     navigate(`/workspace/${vaultId}?doc=${docId}`);
                                 }
                             }}

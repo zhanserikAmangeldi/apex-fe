@@ -5,7 +5,7 @@ import type { Tag } from '../types/editor';
 interface TagDisplayProps {
     documentId: string;
     onManageTags?: () => void;
-    refreshKey?: number; // Add this to force refresh
+    refreshKey?: number;
 }
 
 export const TagDisplay: React.FC<TagDisplayProps> = ({ documentId, onManageTags, refreshKey }) => {
@@ -14,17 +14,14 @@ export const TagDisplay: React.FC<TagDisplayProps> = ({ documentId, onManageTags
 
     useEffect(() => {
         loadTags();
-    }, [documentId, refreshKey]); // Add refreshKey to dependencies
+    }, [documentId, refreshKey]);
 
     const loadTags = async () => {
         try {
             setLoading(true);
-            console.log('TagDisplay: Loading tags for document:', documentId);
             const docTags = await editorApi.getDocumentTags(documentId);
-            console.log('TagDisplay: Loaded tags:', docTags);
             setTags(docTags);
         } catch (err) {
-            console.error('TagDisplay: Failed to load tags:', err);
         } finally {
             setLoading(false);
         }

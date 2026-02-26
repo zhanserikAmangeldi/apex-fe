@@ -127,7 +127,6 @@ export const DocumentLink = Node.create<DocumentLinkOptions>({
     },
 
     renderHTML({ node, HTMLAttributes }) {
-        // Use customText if provided, otherwise use label or id
         const displayText = node.attrs.customText || node.attrs.label || node.attrs.id;
         
         return [
@@ -142,7 +141,6 @@ export const DocumentLink = Node.create<DocumentLinkOptions>({
     },
 
     renderText({ node }) {
-        // In text format, show [customText](label) if customText exists (Markdown style)
         const label = node.attrs.label || node.attrs.id;
         if (node.attrs.customText) {
             return `[${node.attrs.customText}](${label})`;
@@ -177,13 +175,11 @@ export const DocumentLink = Node.create<DocumentLinkOptions>({
                     return isDocumentLink;
                 }),
             
-            // Handle closing ]] to convert text back to link
             ']': ({ editor }) => {
                 const { state } = editor;
                 const { selection } = state;
                 const { $from } = selection;
                 
-                // Get text before cursor
                 const textBefore = $from.parent.textBetween(
                     Math.max(0, $from.parentOffset - 100),
                     $from.parentOffset,
@@ -191,33 +187,22 @@ export const DocumentLink = Node.create<DocumentLinkOptions>({
                     '\ufffc'
                 );
                 
-                console.log('DocumentLink: ] pressed, text before:', textBefore);
-                
-                // Check if we're closing a link: [[title]] or [[title|customText]]
                 const match = textBefore.match(/\[\[([^\]|]+)(\|([^\]]+))?\]$/);
                 
                 if (match) {
-                    console.log('DocumentLink: Found link pattern', match);
                     const fullMatch = match[0];
                     const docTitle = match[1].trim();
                     const customText = match[3]?.trim();
                     
-                    console.log('DocumentLink: Parsed', { docTitle, customText });
-                    
-                    // Find the document by searching
                     const vaultId = this.options.vaultId;
                     if (vaultId) {
-                        console.log('DocumentLink: Searching for document', docTitle);
-                        // Search for exact match
                         editorApi.searchDocuments(docTitle, vaultId, 10).then(docs => {
-                            console.log('DocumentLink: Search results', docs);
                             const doc = docs.find(d => d.title === docTitle) || docs[0];
                             
                             if (doc) {
                                 const from = $from.pos - fullMatch.length;
                                 const to = $from.pos;
                                 
-                                // Replace text with link node
                                 editor.chain()
                                     .focus()
                                     .deleteRange({ from, to })
@@ -231,27 +216,18 @@ export const DocumentLink = Node.create<DocumentLinkOptions>({
                                     })
                                     .run();
 
-                                // Create inline connection
                                 const srcId = this.options.sourceDocumentId;
                                 if (srcId && doc.id) {
                                     editorApi.createConnection(srcId, doc.id, 'references', undefined, true)
                                         .then(() => window.dispatchEvent(new Event('connections-changed')))
                                         .catch(() => {});
                                 }
-                            } else {
-                                console.log('DocumentLink: No document found');
+            } else {
                             }
-                        }).catch(err => {
-                            console.error('DocumentLink: Failed to search document:', err);
-                        });
+                        }).catch(() => {});
                         
-                        // Return true to prevent default ] insertion
                         return true;
-                    } else {
-                        console.log('DocumentLink: No vaultId');
                     }
-                } else {
-                    console.log('DocumentLink: No match found');
                 }
                 
                 return false;
@@ -268,17 +244,14 @@ export const DocumentLink = Node.create<DocumentLinkOptions>({
                 editor: this.editor,
                 ...this.options.suggestion,
             }),
-            // Track removed documentLink nodes and delete their connections
             new Plugin({
                 key: new PluginKey('documentLinkTracker'),
                 appendTransaction(transactions, oldState, newState) {
                     if (!sourceDocumentId) return null;
 
-                    // Only process if document actually changed
                     const docChanged = transactions.some(tr => tr.docChanged);
                     if (!docChanged) return null;
 
-                    // Collect link IDs from old and new state
                     const oldLinks = new Set<string>();
                     const newLinks = new Set<string>();
 
@@ -294,7 +267,6 @@ export const DocumentLink = Node.create<DocumentLinkOptions>({
                         }
                     });
 
-                    // Find removed links
                     for (const id of oldLinks) {
                         if (!newLinks.has(id)) {
                             editorApi.deleteInlineConnection(sourceDocumentId, id)
@@ -379,7 +351,7 @@ export function createDocumentLinkSuggestion(
                         return true;
                     }
 
-                    // @ts-ignore - ref might not have onKeyDown
+                    // @ts-ignore
                     return component.ref?.onKeyDown?.(props) || false;
                 },
 
@@ -412,18 +384,16 @@ export function createDocumentLinkSuggestion(
                 ])
                 .run();
 
-            // Create connection in the background
             if (sourceDocumentId && props.id && props.connectionType) {
                 editorApi.createConnection(
                     sourceDocumentId,
                     props.id,
                     props.connectionType,
                     undefined,
-                    true, // isInline
+                    true,
                 ).then(() => {
                     window.dispatchEvent(new Event('connections-changed'));
                 }).catch(() => {
-                    // Connection may already exist — that's fine
                 });
             }
         },

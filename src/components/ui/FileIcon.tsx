@@ -24,7 +24,6 @@ export const FileIcon: React.FC<FileIconProps> = ({
 }) => {
   const iconUrl = getDocumentIcon(filename, isFolder, isOpen, customIcon);
 
-  // If it's a custom emoji/text icon, render as text
   if (customIcon && !customIcon.startsWith('http') && !customIcon.startsWith('/')) {
     return (
       <span
@@ -36,7 +35,6 @@ export const FileIcon: React.FC<FileIconProps> = ({
     );
   }
 
-  // Otherwise render as image
   return (
     <img
       src={iconUrl}
@@ -46,7 +44,6 @@ export const FileIcon: React.FC<FileIconProps> = ({
       className={`inline-block ${className}`}
       style={{ minWidth: size, minHeight: size }}
       onError={(e) => {
-        // Fallback to emoji if icon fails to load
         const target = e.target as HTMLImageElement;
         target.style.display = 'none';
         const fallback = document.createElement('span');

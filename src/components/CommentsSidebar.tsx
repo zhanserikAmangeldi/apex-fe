@@ -52,10 +52,8 @@ export const CommentsSidebar: React.FC<Props> = ({
     const [replyText, setReplyText] = useState('');
     const [showResolved, setShowResolved] = useState(false);
 
-    // Yjs shared array for comments
     const yComments = ydoc.getArray<Comment>('comments');
 
-    // Sync Yjs array → React state
     const syncComments = useCallback(() => {
         const arr = yComments.toArray();
         setComments([...arr]);
@@ -84,7 +82,6 @@ export const CommentsSidebar: React.FC<Props> = ({
             replies: [],
         };
 
-        // If text is selected, highlight it
         if (hasSelection) {
             editor.chain().focus().setComment(commentId).run();
         }
@@ -134,9 +131,7 @@ export const CommentsSidebar: React.FC<Props> = ({
             yComments.insert(idx, [updated]);
         });
 
-        // Remove highlight if resolving
         if (!comment.resolved && editor) {
-            // Find and remove the mark
             const { doc } = editor.state;
             const positions: { from: number; to: number }[] = [];
             doc.descendants((node, pos) => {

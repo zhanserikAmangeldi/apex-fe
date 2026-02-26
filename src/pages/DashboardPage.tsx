@@ -20,7 +20,6 @@ export const DashboardPage: React.FC = () => {
 
     const { vaults, loading, error, createVault } = useVaults();
 
-    // Map hex colors to Tailwind gradients for display
     const getGradientFromColor = (hexColor: string): string => {
         const colorMap: Record<string, string> = {
             '#a855f7': 'from-purple-500 to-pink-500',
@@ -197,14 +196,6 @@ const VaultCard: React.FC<{
 }> = ({ vault, gradient, onClick, onShare, onManageAccess, formatDate }) => {
     const isOwner = vault.user_permission === 'owner';
     const canManageAccess = isOwner || vault.user_permission === 'admin';
-
-    console.log('VaultCard permissions:', {
-        vaultId: vault.id,
-        vaultName: vault.name,
-        user_permission: vault.user_permission,
-        isOwner,
-        canManageAccess
-    });
 
     return (
         <div onClick={onClick} className="group cursor-pointer">

@@ -69,7 +69,6 @@ class ApiService {
         const headers: Record<string, string> = {};
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
-        // FormData — don't set Content-Type, browser sets it with boundary
         const response = await rawRequest('auth-service/api/v1/users/upload-avatar', {
             method: 'POST',
             headers,

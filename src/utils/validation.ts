@@ -62,7 +62,6 @@ export const validateRegisterForm = (data: {
 }): ValidationErrors => {
     const errors: ValidationErrors = {};
 
-    // Username
     let error = validators.required(data.username, 'Username');
     if (error) errors.username = error;
     else {
@@ -78,7 +77,6 @@ export const validateRegisterForm = (data: {
         }
     }
 
-    // Email
     error = validators.required(data.email, 'Email');
     if (error) errors.email = error;
     else {
@@ -86,7 +84,6 @@ export const validateRegisterForm = (data: {
         if (error) errors.email = error;
     }
 
-    // Password
     error = validators.required(data.password, 'Password');
     if (error) errors.password = error;
     else {
@@ -98,7 +95,6 @@ export const validateRegisterForm = (data: {
         }
     }
 
-    // Confirm Password
     error = validators.required(data.confirmPassword, 'Confirm password');
     if (error) errors.confirmPassword = error;
     else {

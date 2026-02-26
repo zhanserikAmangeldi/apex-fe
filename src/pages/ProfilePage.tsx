@@ -24,7 +24,6 @@ export const ProfilePage: React.FC = () => {
     useEffect(() => {
         loadAvatar();
         
-        // Cleanup function to revoke blob URL when component unmounts
         return () => {
             if (avatarUrl) {
                 URL.revokeObjectURL(avatarUrl);
@@ -34,7 +33,6 @@ export const ProfilePage: React.FC = () => {
 
     const loadAvatar = async () => {
         try {
-            // Clear old blob URL to free memory
             if (avatarUrl) {
                 URL.revokeObjectURL(avatarUrl);
             }
@@ -43,8 +41,6 @@ export const ProfilePage: React.FC = () => {
             const url = URL.createObjectURL(blob);
             setAvatarUrl(url);
         } catch (error: any) {
-            // 400, 401, or 404 means no avatar exists yet or not authorized, which is fine
-            // Just show the default avatar (user's initial)
             const status = error?.response?.status;
             if (status === 400 || status === 401 || status === 404) {
                 setAvatarUrl(null);
@@ -58,13 +54,11 @@ export const ProfilePage: React.FC = () => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Validate file type
         if (!file.type.startsWith('image/')) {
             alert('Please select an image file');
             return;
         }
 
-        // Validate file size (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
             alert('Image size should be less than 5MB');
             return;
@@ -73,11 +67,9 @@ export const ProfilePage: React.FC = () => {
         try {
             setIsUploadingAvatar(true);
             await api.uploadAvatar(file);
-            // Wait a bit for the server to process
             await new Promise(resolve => setTimeout(resolve, 500));
             await loadAvatar();
         } catch (error: any) {
-            console.error('Failed to upload avatar:', error);
             const message = error?.message || 'Failed to upload avatar';
             alert(message);
         } finally {
@@ -91,7 +83,6 @@ export const ProfilePage: React.FC = () => {
             setIsEditing(false);
             alert('Profile updated successfully');
         } catch (error) {
-            console.error('Failed to update profile:', error);
             alert('Failed to update profile');
         }
     };
@@ -99,17 +90,13 @@ export const ProfilePage: React.FC = () => {
     const loadSessions = async () => {
         try {
             const data = await api.getActiveSessions();
-            console.log('Sessions data:', data);
-            // API returns an object with sessions field
             if (data && Array.isArray(data.sessions)) {
                 setSessions(data.sessions);
             } else {
-                console.error('Sessions data is not valid:', data);
                 setSessions([]);
             }
             setShowSessions(true);
         } catch (error) {
-            console.error('Failed to load sessions:', error);
             setSessions([]);
             setShowSessions(true);
             alert('Failed to load sessions');
@@ -124,7 +111,6 @@ export const ProfilePage: React.FC = () => {
             logout();
             navigate('/login');
         } catch (error) {
-            console.error('Failed to logout from all devices:', error);
             alert('Failed to logout from all devices');
         }
     };

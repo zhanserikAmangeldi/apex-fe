@@ -158,7 +158,6 @@ class EditorApiService {
         return httpClient.post<AppDocument>(`${EDITOR_BASE}/documents/${id}/move`, { parentId });
     }
 
-    // Tags
     async getVaultTags(vaultId: string): Promise<any[]> {
         return httpClient.get<any[]>(`${EDITOR_BASE}/vaults/${vaultId}/tags`);
     }
@@ -187,7 +186,6 @@ class EditorApiService {
         await httpClient.delete(`${EDITOR_BASE}/documents/${documentId}/tags/${tagId}`);
     }
 
-    // Search
     async searchDocuments(query: string, vaultId?: string, limit: number = 10): Promise<AppDocument[]> {
         const params = new URLSearchParams({ query, limit: limit.toString() });
         if (vaultId) params.append('vaultId', vaultId);
@@ -202,13 +200,11 @@ class EditorApiService {
         return data.results || [];
     }
 
-    // Graph
     async getVaultGraph(vaultId: string): Promise<any> {
         const t = Date.now();
         return httpClient.get<any>(`${EDITOR_BASE}/vaults/${vaultId}/graph?t=${t}`);
     }
 
-    // Connections (Zettelkasten)
     async getNoteConnections(noteId: string): Promise<NoteConnection[]> {
         const data = await httpClient.get<any>(`${EDITOR_BASE}/connections/note/${noteId}`);
         return data.connections || [];

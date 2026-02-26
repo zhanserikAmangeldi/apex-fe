@@ -6,7 +6,7 @@ interface TagManagerProps {
     documentId: string;
     vaultId: string;
     onClose: () => void;
-    onUpdate?: () => void; // Callback when tags are updated
+    onUpdate?: () => void;
 }
 
 const DEFAULT_COLORS = [
@@ -29,18 +29,14 @@ export const TagManager: React.FC<TagManagerProps> = ({ documentId, vaultId, onC
     const loadTags = async () => {
         try {
             setLoading(true);
-            console.log('TagManager: Loading tags for vault:', vaultId, 'and document:', documentId);
             const [allTags, docTags] = await Promise.all([
                 editorApi.getVaultTags(vaultId),
                 editorApi.getDocumentTags(documentId)
             ]);
-            console.log('TagManager: Vault tags:', allTags);
-            console.log('TagManager: Document tags:', docTags);
             setVaultTags(allTags);
             setDocumentTags(docTags);
         } catch (err) {
             setError('Failed to load tags');
-            console.error('TagManager: Failed to load tags:', err);
         } finally {
             setLoading(false);
         }
@@ -53,27 +49,16 @@ export const TagManager: React.FC<TagManagerProps> = ({ documentId, vaultId, onC
         try {
             setLoading(true);
             setError(null);
-            console.log('TagManager: Creating tag:', newTagName);
             const newTag = await editorApi.createTag(vaultId, newTagName.trim(), selectedColor);
-            console.log('TagManager: Tag created:', newTag);
-            
-            // Add to vault tags list
             setVaultTags([...vaultTags, newTag]);
-            
-            // Automatically assign to document
-            console.log('TagManager: Auto-assigning tag to document');
             await editorApi.addTagToDocument(documentId, newTag.id);
             setDocumentTags([...documentTags, newTag]);
-            console.log('TagManager: Tag auto-assigned');
             
-            // Reset form
             setNewTagName('');
             setSelectedColor(DEFAULT_COLORS[0]);
             
-            // Notify parent
             onUpdate?.();
         } catch (err: any) {
-            console.error('TagManager: Failed to create tag:', err);
             setError(err.message || 'Failed to create tag');
         } finally {
             setLoading(false);
@@ -86,19 +71,16 @@ export const TagManager: React.FC<TagManagerProps> = ({ documentId, vaultId, onC
         try {
             setLoading(true);
             setError(null);
-            console.log('TagManager: Toggling tag:', tag.name, 'isAssigned:', isAssigned);
             if (isAssigned) {
                 await editorApi.removeTagFromDocument(documentId, tag.id);
                 setDocumentTags(documentTags.filter(t => t.id !== tag.id));
-                console.log('TagManager: Tag removed');
             } else {
                 await editorApi.addTagToDocument(documentId, tag.id);
                 setDocumentTags([...documentTags, tag]);
-                console.log('TagManager: Tag added');
             }
-            onUpdate?.(); // Notify parent of update
+            onUpdate?.();
         } catch (err: any) {
-            console.error('TagManager: Failed to toggle tag:', err);
+            
             setError(err.message || 'Failed to update tag');
         } finally {
             setLoading(false);

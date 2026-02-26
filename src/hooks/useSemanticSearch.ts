@@ -18,7 +18,6 @@ export function useSemanticSearch() {
             return;
         }
 
-        // Debounce 300ms
         if (debounceRef.current) clearTimeout(debounceRef.current);
 
         debounceRef.current = setTimeout(async () => {

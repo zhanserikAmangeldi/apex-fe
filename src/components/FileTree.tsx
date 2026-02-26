@@ -47,7 +47,6 @@ export const FileTree: React.FC<FileTreeProps> = ({
     const handleContextMenu = (e: React.MouseEvent, item: AppDocument) => {
         e.preventDefault();
         e.stopPropagation();
-        console.log('Context menu triggered at:', { clientX: e.clientX, clientY: e.clientY, pageX: e.pageX, pageY: e.pageY });
         setContextMenu({ x: e.clientX, y: e.clientY, item });
     };
 
@@ -460,7 +459,6 @@ const ContextMenu: React.FC<{
     const menuRef = useRef<HTMLDivElement>(null);
     const [position, setPosition] = useState({ x, y });
 
-    // Корректируем позицию после рендера, если меню выходит за границы
     useEffect(() => {
         if (menuRef.current) {
             const menuRect = menuRef.current.getBoundingClientRect();
@@ -470,31 +468,17 @@ const ContextMenu: React.FC<{
             let adjustedX = x;
             let adjustedY = y;
 
-            console.log('Menu positioning:', { 
-                x, y, 
-                menuWidth: menuRect.width, 
-                menuHeight: menuRect.height,
-                viewportWidth, 
-                viewportHeight 
-            });
-
-            // Если меню выходит за правую границу, показываем слева от курсора
             if (x + menuRect.width > viewportWidth) {
                 adjustedX = x - menuRect.width;
             }
 
-            // Если меню выходит за нижнюю границу, показываем выше курсора
             if (y + menuRect.height > viewportHeight) {
                 adjustedY = y - menuRect.height;
             }
 
-            // Убеждаемся, что меню не выходит за левую и верхнюю границы
             adjustedX = Math.max(10, adjustedX);
             adjustedY = Math.max(10, adjustedY);
 
-            console.log('Adjusted position:', { adjustedX, adjustedY });
-
-            // Обновляем только если позиция изменилась
             if (adjustedX !== position.x || adjustedY !== position.y) {
                 setPosition({ x: adjustedX, y: adjustedY });
             }

@@ -1,8 +1,3 @@
-/**
- * Unified HTTP client with automatic token refresh interceptor.
- * All API calls go through this client — no more duplicated 401 handling.
- */
-
 const API_BASE = 'http://localhost:8000/api/';
 
 type TokenStore = {
@@ -48,7 +43,7 @@ async function refreshTokens(): Promise<boolean> {
         const response = await fetch(`${API_BASE}auth-service/api/v1/auth/refresh`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include', // sends httpOnly cookie
+            credentials: 'include', 
             body: JSON.stringify({ refresh_token: refreshToken }),
         });
 
@@ -63,10 +58,6 @@ async function refreshTokens(): Promise<boolean> {
     }
 }
 
-/**
- * Ensures only one refresh happens at a time. All concurrent 401s
- * wait for the same refresh promise.
- */
 async function ensureTokenRefreshed(): Promise<boolean> {
     if (isRefreshing && refreshPromise) {
         return refreshPromise;
@@ -106,12 +97,9 @@ function buildHeaders(customHeaders?: HeadersInit): Record<string, string> {
 export interface RequestOptions extends Omit<RequestInit, 'headers'> {
     headers?: Record<string, string>;
     skipAuth?: boolean;
-    raw?: boolean; // return Response instead of parsed JSON
+    raw?: boolean; 
 }
 
-/**
- * Core request function with automatic 401 retry.
- */
 export async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
     const { skipAuth, raw, headers: customHeaders, ...fetchOptions } = options;
 
@@ -123,11 +111,9 @@ export async function request<T>(endpoint: string, options: RequestOptions = {})
 
     let response = await fetch(url, { ...fetchOptions, headers, credentials: 'include' });
 
-    // Auto-retry on 401
     if (response.status === 401 && !skipAuth) {
         const refreshed = await ensureTokenRefreshed();
         if (refreshed) {
-            // Retry with new token
             const newHeaders = buildHeaders(customHeaders);
             response = await fetch(url, { ...fetchOptions, headers: newHeaders, credentials: 'include' });
         } else {
@@ -150,16 +136,11 @@ export async function request<T>(endpoint: string, options: RequestOptions = {})
         throw errorData;
     }
 
-    // Handle empty responses (204, etc.)
     const text = await response.text();
     if (!text) return undefined as unknown as T;
     return JSON.parse(text) as T;
 }
 
-/**
- * Fetch that returns raw Response (for blobs, streams, etc.)
- * Still handles 401 refresh automatically.
- */
 export async function rawRequest(endpoint: string, options: RequestOptions = {}): Promise<Response> {
     return request<Response>(endpoint, { ...options, raw: true });
 }

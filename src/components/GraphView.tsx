@@ -84,19 +84,10 @@ export function GraphView({ vaultId, onNodeClick, onClose }: GraphViewProps) {
             
             const data: GraphData = await editorApi.getVaultGraph(vaultId);
             
-            console.log('GraphView: Loaded graph data', data);
-            console.log('GraphView: Nodes count:', data.nodes?.length);
-            console.log('GraphView: Edges count:', data.edges?.length);
-            console.log('GraphView: First 3 nodes:', data.nodes?.slice(0, 3));
-            console.log('GraphView: Stats:', data.stats);
-            
-            // Convert to React Flow format
             const flowNodes: Node[] = data.nodes.map((node, index) => {
-                // Calculate position in a circular layout
                 const angle = (index / data.nodes.length) * 2 * Math.PI;
                 const radius = Math.max(300, data.nodes.length * 20);
 
-                // Find topic cluster color for this node
                 let clusterColor: string | null = null;
                 if (showTopics && topicClusters.length > 0) {
                     for (const cluster of topicClusters) {
@@ -181,7 +172,6 @@ export function GraphView({ vaultId, onNodeClick, onClose }: GraphViewProps) {
         loadGraph();
     }, [loadGraph]);
 
-    // Filter edges based on selected filters
     useEffect(() => {
         if (!stats) return;
 

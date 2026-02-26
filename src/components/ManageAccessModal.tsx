@@ -31,10 +31,8 @@ export const ManageAccessModal: React.FC<ManageAccessModalProps> = ({ type, id, 
             } else {
                 data = await editorApi.getDocumentCollaborators(id);
             }
-            console.log('Collaborators loaded:', data);
             setCollaborators(data.collaborators || data);
         } catch (error) {
-            console.error('Failed to load collaborators:', error);
         } finally {
             setLoading(false);
         }
@@ -48,11 +46,9 @@ export const ManageAccessModal: React.FC<ManageAccessModalProps> = ({ type, id, 
             } else {
                 await editorApi.updateDocumentPermission(id, userId, newPermission);
             }
-            console.log('Permission updated:', { userId, newPermission });
-            await loadCollaborators(); // Reload list
+            await loadCollaborators();
             alert('Permission updated successfully!');
         } catch (error) {
-            console.error('Failed to update permission:', error);
             alert('Failed to update permission');
         } finally {
             setActionLoading(null);
@@ -71,11 +67,9 @@ export const ManageAccessModal: React.FC<ManageAccessModalProps> = ({ type, id, 
             } else {
                 await editorApi.removeDocumentAccess(id, userId);
             }
-            console.log('Access removed:', { userId });
-            await loadCollaborators(); // Reload list
+            await loadCollaborators();
             alert('Access removed successfully!');
         } catch (error) {
-            console.error('Failed to remove access:', error);
             alert('Failed to remove access');
         } finally {
             setActionLoading(null);

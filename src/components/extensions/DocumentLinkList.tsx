@@ -93,7 +93,6 @@ export const DocumentLinkList = forwardRef((props: DocumentLinkListProps, ref) =
         },
     }));
 
-    // Step 2: Type selection
     if (selectedDoc) {
         return (
             <div className="bg-[#1a1a1a] border border-white/10 rounded-lg shadow-xl p-2 min-w-[220px]">
@@ -126,7 +125,6 @@ export const DocumentLinkList = forwardRef((props: DocumentLinkListProps, ref) =
         );
     }
 
-    // Step 1: Document selection
     if (props.items.length === 0) {
         return (
             <div className="bg-[#1a1a1a] border border-white/10 rounded-lg shadow-xl p-2 min-w-[200px]">

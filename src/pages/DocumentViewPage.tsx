@@ -25,10 +25,8 @@ export const DocumentViewPage: React.FC = () => {
             setLoading(true);
             setError(null);
             const doc = await editorApi.getDocument(documentId!);
-            console.log('Loaded document:', doc);
             setDocument(doc);
         } catch (err) {
-            console.error('Failed to load document:', err);
             setError('Failed to load document. You may not have access to this document.');
         } finally {
             setLoading(false);
@@ -62,13 +60,6 @@ export const DocumentViewPage: React.FC = () => {
     const isReadOnly = document.user_permission === 'read';
     const isOwner = document.user_permission === 'owner';
     const canManageAccess = isOwner || document.user_permission === 'admin';
-
-    console.log('Document permissions:', {
-        user_permission: document.user_permission,
-        isOwner,
-        isReadOnly,
-        canManageAccess
-    });
 
     return (
         <div className="min-h-screen bg-[#0A0A0A]">

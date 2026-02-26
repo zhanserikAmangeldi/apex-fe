@@ -19,7 +19,6 @@ export function useRelatedNotes(documentId: string | null | undefined, limit = 5
             const data = await aiApi.getRelatedNotes(documentId, limit);
             setRelated(data);
         } catch (err) {
-            // Silently fail — related notes are non-critical
             setError(err instanceof Error ? err.message : 'Failed to load related notes');
             setRelated([]);
         } finally {
