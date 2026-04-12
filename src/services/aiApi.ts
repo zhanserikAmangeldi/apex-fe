@@ -68,6 +68,70 @@ class AiApiService {
     async getTopicClusters(vaultId: string, k: number = 0): Promise<TopicClustersResponse> {
         return httpClient.get<TopicClustersResponse>(`${AI_BASE}/topics/clusters?vault_id=${vaultId}&k=${k}`);
     }
+
+    // Chat endpoints
+    async chatWithDocument(
+        documentId: string,
+        message: string,
+        sessionId?: string,
+        includeVideos: boolean = true
+    ): Promise<ChatResponse> {
+        return httpClient.post<ChatResponse>(`${AI_BASE}/chat`, {
+            document_id: documentId,
+            message,
+            session_id: sessionId,
+            include_videos: includeVideos,
+        });
+    }
+
+    async getChatSessions(documentId: string): Promise<ChatSession[]> {
+        return httpClient.get<ChatSession[]>(`${AI_BASE}/chat/sessions/${documentId}`);
+    }
+
+    async searchVideos(query: string, maxResults: number = 5): Promise<VideoSearchResponse> {
+        return httpClient.post<VideoSearchResponse>(`${AI_BASE}/videos/search`, {
+            query,
+            max_results: maxResults,
+        });
+    }
+}
+
+export interface ChatMessage {
+    role: 'user' | 'assistant' | 'system';
+    content: string;
+    metadata?: Record<string, any>;
+}
+
+export interface ChatResponse {
+    session_id: string;
+    message: ChatMessage;
+    videos: VideoResult[];
+}
+
+export interface ChatSession {
+    id: string;
+    document_id: string;
+    title: string;
+    created_at: string;
+    updated_at: string;
+    messages: ChatMessage[];
+}
+
+export interface VideoResult {
+    video_id: string;
+    title: string;
+    description: string;
+    thumbnail_url: string;
+    channel_title: string;
+    published_at: string;
+    duration?: string;
+    view_count?: number;
+}
+
+export interface VideoSearchResponse {
+    query: string;
+    videos: VideoResult[];
+    count: number;
 }
 
 export const aiApi = new AiApiService();
