@@ -2,7 +2,7 @@ import { useState, useCallback, useRef } from 'react';
 import { aiApi } from '../services/aiApi';
 import type { SearchResult } from '../services/aiApi';
 
-export function useSemanticSearch() {
+export function useSemanticSearch(vaultId?: string) {
     const [results, setResults] = useState<SearchResult[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -18,13 +18,18 @@ export function useSemanticSearch() {
             return;
         }
 
+        if (!vaultId) {
+            setError('No vault selected');
+            return;
+        }
+
         if (debounceRef.current) clearTimeout(debounceRef.current);
 
         debounceRef.current = setTimeout(async () => {
             try {
                 setLoading(true);
                 setError(null);
-                const response = await aiApi.semanticSearch(q.trim(), limit);
+                const response = await aiApi.semanticSearch(q.trim(), vaultId, limit);
                 setResults(response.results);
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Search failed');
@@ -33,7 +38,7 @@ export function useSemanticSearch() {
                 setLoading(false);
             }
         }, 300);
-    }, []);
+    }, [vaultId]);
 
     const clear = useCallback(() => {
         setResults([]);

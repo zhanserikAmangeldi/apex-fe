@@ -22,7 +22,7 @@ export const GradientButton: React.FC<ButtonProps> = ({
             type={type}
             onClick={onClick}
             disabled={disabled || loading}
-            className={` py-3.5 rounded-xl bg-gradient-to-r ${gradients[variant]} text-white font-semibold text-lg 
+            className={`px-6 py-3.5 rounded-xl bg-gradient-to-r ${gradients[variant]} text-white font-semibold text-lg 
         hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
         >
             {loading ? (

@@ -34,11 +34,13 @@ export interface TopicClustersResponse {
 class AiApiService {
     async semanticSearch(
         query: string,
+        vaultId: string,
         limit: number = 10,
-        minScore: number = 0.15
+        minScore: number = 0.35
     ): Promise<SemanticSearchResponse> {
         return httpClient.post<SemanticSearchResponse>(`${AI_BASE}/search/semantic`, {
             query,
+            vault_id: vaultId,
             limit,
             min_score: minScore,
         });
@@ -50,9 +52,10 @@ class AiApiService {
         );
     }
 
-    async indexDocument(documentId: string, title: string, content: string): Promise<EmbeddingResponse> {
+    async indexDocument(documentId: string, vaultId: string, title: string, content: string): Promise<EmbeddingResponse> {
         return httpClient.post<EmbeddingResponse>(`${AI_BASE}/embeddings`, {
             document_id: documentId,
+            vault_id: vaultId,
             title,
             content,
         });
@@ -62,8 +65,8 @@ class AiApiService {
         await httpClient.delete(`${AI_BASE}/embeddings/${documentId}`);
     }
 
-    async getTopicClusters(k: number = 0): Promise<TopicClustersResponse> {
-        return httpClient.get<TopicClustersResponse>(`${AI_BASE}/topics/clusters?k=${k}`);
+    async getTopicClusters(vaultId: string, k: number = 0): Promise<TopicClustersResponse> {
+        return httpClient.get<TopicClustersResponse>(`${AI_BASE}/topics/clusters?vault_id=${vaultId}&k=${k}`);
     }
 }
 

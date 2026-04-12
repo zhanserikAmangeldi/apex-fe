@@ -258,7 +258,6 @@ export function GraphView({ vaultId, onNodeClick, onClose }: GraphViewProps) {
                 
                 <Panel position="top-left" className="graph-panel">
                     <div className="graph-header">
-                        <h3>📊 Graph View</h3>
                         {onClose && (
                             <button onClick={onClose} className="graph-close-btn">
                                 ✕
@@ -356,7 +355,7 @@ export function GraphView({ vaultId, onNodeClick, onClose }: GraphViewProps) {
                                 } else {
                                     try {
                                         setTopicsLoading(true);
-                                        const data = await aiApi.getTopicClusters();
+                                        const data = await aiApi.getTopicClusters(vaultId);
                                         setTopicClusters(data.clusters);
                                         setShowTopics(true);
                                     } catch (err) {
@@ -378,7 +377,7 @@ export function GraphView({ vaultId, onNodeClick, onClose }: GraphViewProps) {
                                 cursor: topicsLoading ? 'wait' : 'pointer',
                             }}
                         >
-                            {topicsLoading ? 'Loading...' : showTopics ? '✨ Topics ON' : '✨ Color by Topic'}
+                            {topicsLoading ? 'Loading...' : showTopics ? 'Topics ON' : 'Color by Topic'}
                         </button>
                         {showTopics && topicClusters.length > 0 && (
                             <div style={{ marginTop: '8px' }}>

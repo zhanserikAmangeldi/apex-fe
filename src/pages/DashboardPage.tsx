@@ -130,7 +130,7 @@ export const DashboardPage: React.FC = () => {
                                 {searchQuery ? 'No vaults found' : 'No vaults yet'}
                             </h3>
                             {!searchQuery && (
-                                <GradientButton onClick={() => setShowCreateModal(true)}>
+                                <GradientButton onClick={() => setShowCreateModal(true)} className="mt-4">
                                     Create Your First Vault
                                 </GradientButton>
                             )}
@@ -162,7 +162,10 @@ export const DashboardPage: React.FC = () => {
             {showCreateModal && (
                 <CreateVaultModal
                     onClose={() => setShowCreateModal(false)}
-                    onSubmit={createVault}
+                    onSubmit={async (data) => {
+                        const vault = await createVault(data);
+                        navigate(`/workspace/${vault.id}`);
+                    }}
                 />
             )}
 
