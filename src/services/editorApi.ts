@@ -98,7 +98,7 @@ class EditorApiService {
     }
 
     async uploadAttachment(uploadUrl: string, file: File): Promise<void> {
-        const fullUrl = uploadUrl.startsWith('http') ? uploadUrl : `http://localhost:8000${uploadUrl}`;
+        const fullUrl = uploadUrl.startsWith('http') ? uploadUrl : `${import.meta.env.VITE_API_BASE || 'http://localhost:8000'}${uploadUrl}`;
         const token = getAccessToken();
         const response = await fetch(fullUrl, {
             method: 'PUT',

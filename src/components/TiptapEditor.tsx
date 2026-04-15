@@ -41,7 +41,7 @@ export const TiptapEditor = forwardRef<TiptapEditorRef, Props>(({
 
     useEffect(() => {
         const hProvider = new HocuspocusProvider({
-            url: 'ws://localhost:1234',
+            url: import.meta.env.VITE_WS_URL || 'ws://localhost:1234',
             name: documentId,
             document: ydoc,
             token: localStorage.getItem('access_token') || '',
