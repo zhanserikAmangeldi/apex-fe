@@ -7,9 +7,11 @@ interface SemanticSearchProps {
     vaultId?: string;
     onSelectDocument: (documentId: string) => void;
     onClose: () => void;
+    switchLabel?: string;
+    onSwitch?: () => void;
 }
 
-export const SemanticSearch: React.FC<SemanticSearchProps> = ({ vaultId, onSelectDocument, onClose }) => {
+export const SemanticSearch: React.FC<SemanticSearchProps> = ({ vaultId, onSelectDocument, onClose, switchLabel, onSwitch }) => {
     const [mode, setMode] = useState<'ai' | 'text'>('ai');
     const { results: aiResults, loading: aiLoading, error: aiError, search: aiSearch } = useSemanticSearch(vaultId);
     const [textResults, setTextResults] = useState<FullTextResult[]>([]);
@@ -72,12 +74,20 @@ export const SemanticSearch: React.FC<SemanticSearchProps> = ({ vaultId, onSelec
                         </svg>
                         Search
                     </h3>
-                    <button onClick={onClose}
-                        className="p-1 rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
+                    <div className="flex items-center gap-1">
+                        {onSwitch && switchLabel && (
+                            <button onClick={onSwitch}
+                                className="px-2 py-1 rounded text-xs font-medium bg-white/5 text-white/50 hover:bg-white/10 hover:text-white/80 transition-colors">
+                                {switchLabel}
+                            </button>
+                        )}
+                        <button onClick={onClose}
+                            className="p-1 rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Mode tabs */}
