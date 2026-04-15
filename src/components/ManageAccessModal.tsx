@@ -31,10 +31,8 @@ export const ManageAccessModal: React.FC<ManageAccessModalProps> = ({ type, id, 
             } else {
                 data = await editorApi.getDocumentCollaborators(id);
             }
-            console.log('Collaborators loaded:', data);
-            setCollaborators(data.collaborators || data);
+            setCollaborators((data as any).collaborators || data);
         } catch (error) {
-            console.error('Failed to load collaborators:', error);
         } finally {
             setLoading(false);
         }
@@ -48,11 +46,9 @@ export const ManageAccessModal: React.FC<ManageAccessModalProps> = ({ type, id, 
             } else {
                 await editorApi.updateDocumentPermission(id, userId, newPermission);
             }
-            console.log('Permission updated:', { userId, newPermission });
-            await loadCollaborators(); // Reload list
+            await loadCollaborators();
             alert('Permission updated successfully!');
         } catch (error) {
-            console.error('Failed to update permission:', error);
             alert('Failed to update permission');
         } finally {
             setActionLoading(null);
@@ -71,11 +67,9 @@ export const ManageAccessModal: React.FC<ManageAccessModalProps> = ({ type, id, 
             } else {
                 await editorApi.removeDocumentAccess(id, userId);
             }
-            console.log('Access removed:', { userId });
-            await loadCollaborators(); // Reload list
+            await loadCollaborators();
             alert('Access removed successfully!');
         } catch (error) {
-            console.error('Failed to remove access:', error);
             alert('Failed to remove access');
         } finally {
             setActionLoading(null);
@@ -84,12 +78,12 @@ export const ManageAccessModal: React.FC<ManageAccessModalProps> = ({ type, id, 
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-6">
-            <div className="bg-[#1A1A1A] border border-white/10 rounded-3xl p-10 w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
-                <div className="flex items-center justify-between mb-8">
-                    <h2 className="text-white text-3xl font-bold">
+            <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-8 w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-white text-2xl font-bold">
                         Manage Access - {type === 'vault' ? 'Vault' : 'Document'}
                     </h2>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-4">
                         <button
                             onClick={loadCollaborators}
                             disabled={loading}
@@ -111,22 +105,22 @@ export const ManageAccessModal: React.FC<ManageAccessModalProps> = ({ type, id, 
 
                 {loading ? (
                     <div className="flex items-center justify-center py-20">
-                        <div className="text-white/60 text-lg">Loading collaborators...</div>
+                        <div className="text-white/60 text-sm">Loading collaborators...</div>
                     </div>
                 ) : collaborators.length === 0 ? (
                     <div className="flex items-center justify-center py-20">
-                        <div className="text-white/60 text-lg">No collaborators yet</div>
+                        <div className="text-white/60 text-sm">No collaborators yet</div>
                     </div>
                 ) : (
                     <div className="flex-1 overflow-y-auto space-y-4">
                         {collaborators.map((collab) => (
                             <div
                                 key={collab.user_id}
-                                className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-colors"
+                                className="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/10 transition-colors"
                             >
                                 <div className="flex items-center justify-between">
                                     <div className="flex-1">
-                                        <p className="text-white font-medium font-mono text-base">
+                                        <p className="text-white font-medium font-mono text-sm">
                                             {collab.user_id}
                                         </p>
                                         <p className="text-white/40 text-sm mt-2">
@@ -134,7 +128,7 @@ export const ManageAccessModal: React.FC<ManageAccessModalProps> = ({ type, id, 
                                         </p>
                                     </div>
 
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-2">
                                         {/* Permission Selector */}
                                         <select
                                             value={collab.permission}
@@ -143,7 +137,8 @@ export const ManageAccessModal: React.FC<ManageAccessModalProps> = ({ type, id, 
                                                 e.target.value as 'read' | 'write' | 'admin'
                                             )}
                                             disabled={actionLoading === collab.user_id}
-                                            className="px-5 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white text-base cursor-pointer hover:bg-white/20 transition-colors disabled:opacity-50"
+                                            className="px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white text-sm cursor-pointer hover:bg-white/20 transition-colors disabled:opacity-50 appearance-none"
+                                            style={{ WebkitAppearance: 'none', MozAppearance: 'none' }}
                                         >
                                             <option value="read">Read</option>
                                             <option value="write">Write</option>
@@ -154,7 +149,7 @@ export const ManageAccessModal: React.FC<ManageAccessModalProps> = ({ type, id, 
                                         <button
                                             onClick={() => handleRemoveAccess(collab.user_id)}
                                             disabled={actionLoading === collab.user_id}
-                                            className="px-5 py-2.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-xl text-base transition-colors disabled:opacity-50 font-medium"
+                                            className="px-4 py-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-xl text-sm transition-colors disabled:opacity-50 font-medium"
                                         >
                                             {actionLoading === collab.user_id ? 'Removing...' : 'Remove'}
                                         </button>
@@ -165,10 +160,10 @@ export const ManageAccessModal: React.FC<ManageAccessModalProps> = ({ type, id, 
                     </div>
                 )}
 
-                <div className="mt-8 pt-6 border-t border-white/10">
+                <div className="mt-6 pt-4 border-t border-white/10">
                     <button
                         onClick={onClose}
-                        className="w-full px-6 py-4 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-colors text-lg font-medium"
+                        className="w-full px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors text-sm font-medium"
                     >
                         Close
                     </button>

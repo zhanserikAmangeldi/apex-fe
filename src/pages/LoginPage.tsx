@@ -44,7 +44,7 @@ export const LoginPage: React.FC = () => {
                 bottom: "linear-gradient(180deg, #300061 0%, #0A1030 100%)"
             }}
         >
-            <div className="space-y-6">
+            <div className="space-y-4">
                 <div>
                     <h2 className="text-3xl font-semibold text-white">Login</h2>
                     <p className="text-white/70 text-sm">Glad you're back.!</p>
@@ -52,7 +52,7 @@ export const LoginPage: React.FC = () => {
 
                 {error && <Alert type="error" message={error} onClose={clearError} />}
 
-                <div className="space-y-5">
+                <div className="space-y-4">
                     <Input
                         placeholder="Username"
                         value={values.login}
@@ -79,7 +79,7 @@ export const LoginPage: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-4">
                     <GradientButton className="w-full" onClick={handleSubmit} loading={isLoading}>Login</GradientButton>
                     <p className="text-center text-white/80 text-sm cursor-pointer hover:text-white transition-colors"
                        onClick={() => navigate('/forgot-password')}>

@@ -1,5 +1,5 @@
-import { httpClient, rawRequest, getAccessToken } from './httpClient';
-import type { AppDocument, CreateDocumentRequest, CreateVaultRequest, Vault } from '../types/editor';
+import { httpClient, getAccessToken } from './httpClient';
+import type { AppDocument, CreateDocumentRequest, CreateVaultRequest, Vault, NoteConnection, ConnectionType } from '../types/editor';
 
 const EDITOR_BASE = 'editor-service/api/v1';
 
@@ -98,7 +98,7 @@ class EditorApiService {
     }
 
     async uploadAttachment(uploadUrl: string, file: File): Promise<void> {
-        const fullUrl = uploadUrl.startsWith('http') ? uploadUrl : `http://localhost:8000${uploadUrl}`;
+        const fullUrl = uploadUrl.startsWith('http') ? uploadUrl : `${import.meta.env.VITE_API_BASE || 'http://localhost:8000'}${uploadUrl}`;
         const token = getAccessToken();
         const response = await fetch(fullUrl, {
             method: 'PUT',
@@ -158,7 +158,6 @@ class EditorApiService {
         return httpClient.post<AppDocument>(`${EDITOR_BASE}/documents/${id}/move`, { parentId });
     }
 
-    // Tags
     async getVaultTags(vaultId: string): Promise<any[]> {
         return httpClient.get<any[]>(`${EDITOR_BASE}/vaults/${vaultId}/tags`);
     }
@@ -187,7 +186,6 @@ class EditorApiService {
         await httpClient.delete(`${EDITOR_BASE}/documents/${documentId}/tags/${tagId}`);
     }
 
-    // Search
     async searchDocuments(query: string, vaultId?: string, limit: number = 10): Promise<AppDocument[]> {
         const params = new URLSearchParams({ query, limit: limit.toString() });
         if (vaultId) params.append('vaultId', vaultId);
@@ -202,10 +200,37 @@ class EditorApiService {
         return data.results || [];
     }
 
-    // Graph
     async getVaultGraph(vaultId: string): Promise<any> {
         const t = Date.now();
         return httpClient.get<any>(`${EDITOR_BASE}/vaults/${vaultId}/graph?t=${t}`);
+    }
+
+    async getNoteConnections(noteId: string): Promise<NoteConnection[]> {
+        const data = await httpClient.get<any>(`${EDITOR_BASE}/connections/note/${noteId}`);
+        return data.connections || [];
+    }
+
+    async createConnection(sourceNoteId: string, targetNoteId: string, connectionType: ConnectionType = 'related', description?: string, isInline = false): Promise<NoteConnection> {
+        return httpClient.post<NoteConnection>(`${EDITOR_BASE}/connections`, {
+            sourceNoteId, targetNoteId, connectionType, description, isInline,
+        });
+    }
+
+    async updateConnection(id: string, data: { connectionType?: ConnectionType; description?: string }): Promise<NoteConnection> {
+        return httpClient.put<NoteConnection>(`${EDITOR_BASE}/connections/${id}`, data);
+    }
+
+    async deleteConnection(id: string): Promise<void> {
+        await httpClient.delete(`${EDITOR_BASE}/connections/${id}`);
+    }
+
+    async deleteInlineConnection(sourceDocumentId: string, targetDocumentId: string): Promise<void> {
+        await httpClient.delete(`${EDITOR_BASE}/connections/inline/${sourceDocumentId}/${targetDocumentId}`);
+    }
+
+    async getConnectionTypes(): Promise<Array<{ value: string; label: string }>> {
+        const data = await httpClient.get<any>(`${EDITOR_BASE}/connections/types`);
+        return data.types || [];
     }
 }
 

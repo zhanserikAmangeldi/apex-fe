@@ -41,7 +41,7 @@ export const TiptapEditor = forwardRef<TiptapEditorRef, Props>(({
 
     useEffect(() => {
         const hProvider = new HocuspocusProvider({
-            url: 'ws://localhost:1234',
+            url: import.meta.env.VITE_WS_URL || 'ws://localhost:1234',
             name: documentId,
             document: ydoc,
             token: localStorage.getItem('access_token') || '',
@@ -63,8 +63,9 @@ export const TiptapEditor = forwardRef<TiptapEditorRef, Props>(({
             Collaboration.configure({ document: ydoc }),
             CommentHighlight,
             DocumentLink.configure({
-                suggestion: createDocumentLinkSuggestion(vaultId),
+                suggestion: createDocumentLinkSuggestion(vaultId, documentId),
                 vaultId: vaultId,
+                sourceDocumentId: documentId,
                 HTMLAttributes: { class: 'document-link' },
             }),
             ...(provider ? [CollaborationCursor.configure({

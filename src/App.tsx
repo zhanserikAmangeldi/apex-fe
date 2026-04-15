@@ -14,6 +14,7 @@ import { ProfilePage } from "./pages/ProfilePage.tsx";
 import { AllDocumentsPage } from "./pages/AllDocumentsPage.tsx";
 import { SharedWithMePage } from "./pages/SharedWithMePage.tsx";
 import { DocumentViewPage } from "./pages/DocumentViewPage.tsx";
+import { ScraperPage } from "./pages/ScraperPage.tsx";
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { isAuthenticated, isLoading } = useAuth();
@@ -95,6 +96,11 @@ function AppRoutes() {
             <Route path="/document/:documentId" element={
                 <ProtectedRoute>
                     <DocumentViewPage />
+                </ProtectedRoute>
+            } />
+            <Route path="/scraper" element={
+                <ProtectedRoute>
+                    <ScraperPage />
                 </ProtectedRoute>
             } />
 

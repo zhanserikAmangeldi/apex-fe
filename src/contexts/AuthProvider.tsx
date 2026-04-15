@@ -20,7 +20,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         window.location.href = '/login';
     }, []);
 
-    // Configure the unified httpClient's token store once
     useEffect(() => {
         configureTokenStore({
             onAuthFailure: () => {
@@ -32,7 +31,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         });
     }, []);
 
-    // Load user on mount
     useEffect(() => {
         const token = localStorage.getItem('access_token');
         const refreshToken = localStorage.getItem('refresh_token');
@@ -41,7 +39,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
             api.getProfile()
                 .then((u) => setUser(u))
                 .catch(() => {
-                    // httpClient already tried refresh — if we're here, it failed
                     localStorage.removeItem('access_token');
                     localStorage.removeItem('refresh_token');
                     setUser(null);

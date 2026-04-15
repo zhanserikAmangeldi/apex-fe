@@ -24,7 +24,6 @@ export const ProfilePage: React.FC = () => {
     useEffect(() => {
         loadAvatar();
         
-        // Cleanup function to revoke blob URL when component unmounts
         return () => {
             if (avatarUrl) {
                 URL.revokeObjectURL(avatarUrl);
@@ -34,7 +33,6 @@ export const ProfilePage: React.FC = () => {
 
     const loadAvatar = async () => {
         try {
-            // Очищаем старый blob URL чтобы освободить память
             if (avatarUrl) {
                 URL.revokeObjectURL(avatarUrl);
             }
@@ -43,8 +41,6 @@ export const ProfilePage: React.FC = () => {
             const url = URL.createObjectURL(blob);
             setAvatarUrl(url);
         } catch (error: any) {
-            // 400, 401, or 404 means no avatar exists yet or not authorized, which is fine
-            // Just show the default avatar (user's initial)
             const status = error?.response?.status;
             if (status === 400 || status === 401 || status === 404) {
                 setAvatarUrl(null);
@@ -58,13 +54,11 @@ export const ProfilePage: React.FC = () => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Validate file type
         if (!file.type.startsWith('image/')) {
             alert('Please select an image file');
             return;
         }
 
-        // Validate file size (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
             alert('Image size should be less than 5MB');
             return;
@@ -73,11 +67,9 @@ export const ProfilePage: React.FC = () => {
         try {
             setIsUploadingAvatar(true);
             await api.uploadAvatar(file);
-            // Wait a bit for the server to process
             await new Promise(resolve => setTimeout(resolve, 500));
             await loadAvatar();
         } catch (error: any) {
-            console.error('Failed to upload avatar:', error);
             const message = error?.message || 'Failed to upload avatar';
             alert(message);
         } finally {
@@ -91,7 +83,6 @@ export const ProfilePage: React.FC = () => {
             setIsEditing(false);
             alert('Profile updated successfully');
         } catch (error) {
-            console.error('Failed to update profile:', error);
             alert('Failed to update profile');
         }
     };
@@ -99,17 +90,13 @@ export const ProfilePage: React.FC = () => {
     const loadSessions = async () => {
         try {
             const data = await api.getActiveSessions();
-            console.log('Sessions data:', data);
-            // API возвращает объект с полем sessions
             if (data && Array.isArray(data.sessions)) {
                 setSessions(data.sessions);
             } else {
-                console.error('Sessions data is not valid:', data);
                 setSessions([]);
             }
             setShowSessions(true);
         } catch (error) {
-            console.error('Failed to load sessions:', error);
             setSessions([]);
             setShowSessions(true);
             alert('Failed to load sessions');
@@ -124,7 +111,6 @@ export const ProfilePage: React.FC = () => {
             logout();
             navigate('/login');
         } catch (error) {
-            console.error('Failed to logout from all devices:', error);
             alert('Failed to logout from all devices');
         }
     };
@@ -160,9 +146,9 @@ export const ProfilePage: React.FC = () => {
             </header>
 
             <main className="relative z-10 px-6 py-12 max-w-4xl mx-auto">
-                <GlassCard className="p-6">
+                <GlassCard>
                     <div className="flex items-start gap-6">
-                        <div className="flex flex-col items-center gap-3">
+                        <div className="flex flex-col items-center gap-4">
                             <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center overflow-hidden">
                                 {isUploadingAvatar && (
                                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10">
@@ -198,30 +184,31 @@ export const ProfilePage: React.FC = () => {
                             </div>
 
                             {isEditing ? (
-                                <div className="space-y-3">
+                                <div className="space-y-4">
                                     <div>
-                                        <label className="text-white/80 text-xs block mb-1">Display Name</label>
+                                        <label className="text-white/80 text-sm block mb-2">Display Name</label>
                                         <input
                                             type="text"
                                             value={formData.display_name}
                                             onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
-                                            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm"
+                                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm"
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-white/80 text-xs block mb-1">Bio</label>
+                                        <label className="text-white/80 text-sm block mb-2">Bio</label>
                                         <textarea
                                             value={formData.bio}
                                             onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                                            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm h-20 resize-none"
+                                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm h-20 resize-none"
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-white/80 text-xs block mb-1">Status</label>
+                                        <label className="text-white/80 text-sm block mb-2">Status</label>
                                         <select
                                             value={formData.status}
                                             onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                                            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm"
+                                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm appearance-none cursor-pointer"
+                                            style={{ WebkitAppearance: 'none', MozAppearance: 'none' }}
                                         >
                                             <option value="active">Active</option>
                                             <option value="away">Away</option>
@@ -231,35 +218,35 @@ export const ProfilePage: React.FC = () => {
                                     <div className="flex gap-2 pt-2">
                                         <button
                                             onClick={handleUpdateProfile}
-                                            className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm transition-all"
+                                            className="px-6 py-3 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm transition-all"
                                         >
                                             Save
                                         </button>
                                         <button
                                             onClick={() => setIsEditing(false)}
-                                            className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm transition-colors"
+                                            className="px-6 py-3 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm transition-colors"
                                         >
                                             Cancel
                                         </button>
                                     </div>
                                 </div>
                             ) : (
-                                <div className="space-y-3">
+                                <div className="space-y-4">
                                     <div>
-                                        <p className="text-white/60 text-xs">Display Name</p>
+                                        <p className="text-white/60 text-sm">Display Name</p>
                                         <p className="text-white text-sm">{user?.display_name || 'Not set'}</p>
                                     </div>
                                     <div>
-                                        <p className="text-white/60 text-xs">Bio</p>
+                                        <p className="text-white/60 text-sm">Bio</p>
                                         <p className="text-white text-sm">{user?.bio || 'No bio yet'}</p>
                                     </div>
                                     <div>
-                                        <p className="text-white/60 text-xs">Status</p>
+                                        <p className="text-white/60 text-sm">Status</p>
                                         <p className="text-white text-sm capitalize">{user?.status || 'active'}</p>
                                     </div>
                                     <button
                                         onClick={() => setIsEditing(true)}
-                                        className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm transition-all mt-2"
+                                        className="px-6 py-3 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm transition-all mt-2"
                                     >
                                         Edit Profile
                                     </button>
@@ -269,19 +256,19 @@ export const ProfilePage: React.FC = () => {
                     </div>
                 </GlassCard>
 
-                <GlassCard className="p-6 mt-4">
+                <GlassCard>
                     <h3 className="text-white text-lg font-bold mb-4">Session Management</h3>
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                         <div className="flex gap-2">
                             <button
                                 onClick={loadSessions}
-                                className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm transition-all"
+                                className="px-6 py-3 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm transition-all"
                             >
                                 View Active Sessions
                             </button>
                             <button
                                 onClick={handleLogoutAll}
-                                className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 text-sm transition-colors"
+                                className="px-6 py-3 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 text-sm transition-colors"
                             >
                                 Logout All Devices
                             </button>

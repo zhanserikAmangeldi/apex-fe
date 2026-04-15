@@ -45,7 +45,7 @@ export function EditorToolbar({ editor }: ToolbarProps) {
             <ToolbarButton
                 onClick={toggle(() => editor.chain().focus().toggleBold().run())}
                 isActive={editor.isActive('bold')}
-                title="Жирный (Ctrl+B)"
+                title="Bold (Ctrl+B)"
             >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6zm0 8h9a4 4 0 014 4 4 4 0 01-4 4H6z" stroke="currentColor" strokeWidth="2" fill="none"/>
@@ -55,7 +55,7 @@ export function EditorToolbar({ editor }: ToolbarProps) {
             <ToolbarButton
                 onClick={toggle(() => editor.chain().focus().toggleItalic().run())}
                 isActive={editor.isActive('italic')}
-                title="Курсив (Ctrl+I)"
+                title="Italic (Ctrl+I)"
             >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <line x1="19" y1="4" x2="10" y2="4" /><line x1="14" y1="20" x2="5" y2="20" /><line x1="15" y1="4" x2="9" y2="20" />
@@ -65,7 +65,7 @@ export function EditorToolbar({ editor }: ToolbarProps) {
             <ToolbarButton
                 onClick={toggle(() => editor.chain().focus().toggleStrike().run())}
                 isActive={editor.isActive('strike')}
-                title="Зачёркнутый"
+                title="Strikethrough"
             >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <line x1="4" y1="12" x2="20" y2="12" />
@@ -76,7 +76,7 @@ export function EditorToolbar({ editor }: ToolbarProps) {
             <ToolbarButton
                 onClick={toggle(() => editor.chain().focus().toggleCode().run())}
                 isActive={editor.isActive('code')}
-                title="Инлайн код"
+                title="Inline Code"
             >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                     <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
@@ -89,7 +89,7 @@ export function EditorToolbar({ editor }: ToolbarProps) {
             <ToolbarButton
                 onClick={toggle(() => editor.chain().focus().toggleHeading({ level: 1 }).run())}
                 isActive={editor.isActive('heading', { level: 1 })}
-                title="Заголовок 1"
+                title="Heading 1"
             >
                 <span className="text-xs font-bold leading-none">H1</span>
             </ToolbarButton>
@@ -97,7 +97,7 @@ export function EditorToolbar({ editor }: ToolbarProps) {
             <ToolbarButton
                 onClick={toggle(() => editor.chain().focus().toggleHeading({ level: 2 }).run())}
                 isActive={editor.isActive('heading', { level: 2 })}
-                title="Заголовок 2"
+                title="Heading 2"
             >
                 <span className="text-xs font-bold leading-none">H2</span>
             </ToolbarButton>
@@ -105,7 +105,7 @@ export function EditorToolbar({ editor }: ToolbarProps) {
             <ToolbarButton
                 onClick={toggle(() => editor.chain().focus().toggleHeading({ level: 3 }).run())}
                 isActive={editor.isActive('heading', { level: 3 })}
-                title="Заголовок 3"
+                title="Heading 3"
             >
                 <span className="text-xs font-bold leading-none">H3</span>
             </ToolbarButton>
@@ -116,7 +116,7 @@ export function EditorToolbar({ editor }: ToolbarProps) {
             <ToolbarButton
                 onClick={toggle(() => editor.chain().focus().toggleBulletList().run())}
                 isActive={editor.isActive('bulletList')}
-                title="Маркированный список"
+                title="Bullet List"
             >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                     <line x1="9" y1="6" x2="20" y2="6" /><line x1="9" y1="12" x2="20" y2="12" /><line x1="9" y1="18" x2="20" y2="18" />
@@ -127,7 +127,7 @@ export function EditorToolbar({ editor }: ToolbarProps) {
             <ToolbarButton
                 onClick={toggle(() => editor.chain().focus().toggleOrderedList().run())}
                 isActive={editor.isActive('orderedList')}
-                title="Нумерованный список"
+                title="Ordered List"
             >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                     <line x1="10" y1="6" x2="20" y2="6" /><line x1="10" y1="12" x2="20" y2="12" /><line x1="10" y1="18" x2="20" y2="18" />
@@ -143,7 +143,7 @@ export function EditorToolbar({ editor }: ToolbarProps) {
             <ToolbarButton
                 onClick={toggle(() => editor.chain().focus().toggleBlockquote().run())}
                 isActive={editor.isActive('blockquote')}
-                title="Цитата"
+                title="Blockquote"
             >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M4.583 17.321C3.553 16.227 3 15 3 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311C9.591 11.69 11 13.166 11 15c0 1.933-1.567 3.5-3.5 3.5-1.171 0-2.277-.566-2.917-1.179zM14.583 17.321C13.553 16.227 13 15 13 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311C19.591 11.69 21 13.166 21 15c0 1.933-1.567 3.5-3.5 3.5-1.171 0-2.277-.566-2.917-1.179z"/>
@@ -153,7 +153,7 @@ export function EditorToolbar({ editor }: ToolbarProps) {
             <ToolbarButton
                 onClick={toggle(() => editor.chain().focus().toggleCodeBlock().run())}
                 isActive={editor.isActive('codeBlock')}
-                title="Блок кода"
+                title="Code Block"
             >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                     <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -163,7 +163,7 @@ export function EditorToolbar({ editor }: ToolbarProps) {
 
             <ToolbarButton
                 onClick={toggle(() => editor.chain().focus().setHorizontalRule().run())}
-                title="Разделитель"
+                title="Horizontal Rule"
             >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                     <line x1="3" y1="12" x2="21" y2="12" />

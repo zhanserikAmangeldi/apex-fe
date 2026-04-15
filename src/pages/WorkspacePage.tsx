@@ -13,7 +13,8 @@ import { TagDisplay } from '../components/TagDisplay';
 import { GraphView } from '../components/GraphView';
 import { SemanticSearch } from '../components/SemanticSearch';
 import { RelatedNotes } from '../components/RelatedNotes';
-import { Backlinks } from '../components/Backlinks';
+import { NoteConnections } from '../components/NoteConnections';
+import { DocumentChat } from '../components/DocumentChat';
 import { editorApi } from '../services/editorApi';
 import { isPreviewableFile, getMimeType, isImageFile, isVideoFile, isPdfFile } from '../utils/fileIcons';
 import type { AppDocument, Vault } from '../types/editor';
@@ -34,6 +35,7 @@ export const WorkspacePage: React.FC = () => {
     const [showTagManager, setShowTagManager] = useState(false);
     const [showGraphView, setShowGraphView] = useState(false);
     const [showAISearch, setShowAISearch] = useState(false);
+    const [showChat, setShowChat] = useState(false);
     const [tagRefreshKey, setTagRefreshKey] = useState(0);
     const [vault, setVault] = useState<Vault | null>(null);
     const [previewFile, setPreviewFile] = useState<{ url: string; filename: string; mimeType: string } | null>(null);
@@ -49,16 +51,13 @@ export const WorkspacePage: React.FC = () => {
         refetch,
     } = useDocuments(vaultId);
 
-    // Load vault info to check permissions
     useEffect(() => {
         const loadVault = async () => {
             if (vaultId) {
                 try {
                     const vaultData = await editorApi.getVault(vaultId);
                     setVault(vaultData);
-                    console.log('Vault loaded:', vaultData);
                 } catch (error) {
-                    console.error('Failed to load vault:', error);
                 }
             }
         };
@@ -70,41 +69,27 @@ export const WorkspacePage: React.FC = () => {
         return colors[Math.floor(Math.random() * colors.length)];
     }, []);
 
-    // Determine if user has read-only access to selected document
     const isReadOnly = useMemo(() => {
-        // If no document selected, use vault permissions
         if (!selectedDoc) {
             return vault?.user_permission === 'read';
         }
         
-        // If document has user_permission, use it (direct document permissions or inherited from vault)
         if (selectedDoc.user_permission) {
             return selectedDoc.user_permission === 'read';
         }
         
-        // Fallback to vault permissions
         return vault?.user_permission === 'read';
     }, [vault, selectedDoc]);
-
-    console.log('Workspace permissions:', {
-        vaultId,
-        vault_permission: vault?.user_permission,
-        selectedDocId: selectedDoc?.id,
-        doc_permission: selectedDoc?.user_permission,
-        isReadOnly
-    });
 
     const handleSelectDocument = useCallback(async (doc: AppDocument) => {
         if (!doc.is_folder) {
             setSelectedDoc(doc);
-            setPreviewFile(null); // Reset preview
-            setZoom(100); // Reset zoom
+            setPreviewFile(null);
+            setZoom(100);
             
-            // Check if document has attachments
             try {
                 const attachments = await editorApi.getDocumentAttachments(doc.id);
                 
-                // If document has a previewable attachment with same name, prepare preview
                 if (attachments.length > 0) {
                     const mainAttachment = attachments.find((att: any) => 
                         att.filename === doc.title || isPreviewableFile(att.filename)
@@ -115,7 +100,6 @@ export const WorkspacePage: React.FC = () => {
                         const token = localStorage.getItem('access_token');
                         const urlWithToken = `${downloadUrl}?token=${encodeURIComponent(token || '')}`;
                         
-                        // Set preview data but don't open modal
                         setPreviewFile({
                             url: urlWithToken,
                             filename: mainAttachment.filename,
@@ -124,27 +108,16 @@ export const WorkspacePage: React.FC = () => {
                     }
                 }
             } catch (error) {
-                console.error('Failed to load attachments:', error);
             }
         }
     }, []);
 
-    // Handle doc query parameter for navigation from links
     useEffect(() => {
         const docId = searchParams.get('doc');
         
-        console.log('WorkspacePage: Checking doc parameter', { 
-            docId, 
-            documentsCount: documents.length,
-            search: location.search 
-        });
-        
         if (docId && documents.length > 0) {
             const doc = documents.find(d => d.id === docId);
-            console.log('WorkspacePage: Found document', doc);
             if (doc && !doc.is_folder) {
-                console.log('WorkspacePage: Selecting document from link', doc);
-                // Use handleSelectDocument to properly load attachments and preview
                 handleSelectDocument(doc);
             }
         }
@@ -169,7 +142,6 @@ export const WorkspacePage: React.FC = () => {
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
         } catch (error) {
-            console.error('Download failed:', error);
             alert('Failed to download file');
         }
     };
@@ -178,10 +150,8 @@ export const WorkspacePage: React.FC = () => {
         if (!selectedDoc || !editorRef.current) return;
         
         try {
-            // Get markdown content from editor
             const markdown = editorRef.current.getMarkdown();
             
-            // Sanitize filename: remove .md extension if exists, clean name, add .md back
             let filename = selectedDoc.title;
             if (filename.endsWith('.md')) {
                 filename = filename.slice(0, -3);
@@ -198,7 +168,6 @@ export const WorkspacePage: React.FC = () => {
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
         } catch (error) {
-            console.error('Export failed:', error);
             alert('Failed to export document');
         }
     };
@@ -281,16 +250,27 @@ export const WorkspacePage: React.FC = () => {
 
                     <div className="flex items-center gap-3">
                         {selectedDoc && !selectedDoc.is_folder && !previewFile && (
-                            <button
-                                onClick={handleExportMarkdown}
-                                className="px-4 py-2 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 text-sm transition-all flex items-center gap-2"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                                          d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                Export as Markdown
-                            </button>
+                            <>
+                                <button
+                                    onClick={() => setShowChat(!showChat)}
+                                    className="px-4 py-2 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 text-sm transition-all flex items-center gap-2"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                                    </svg>
+                                    {showChat ? 'Hide Chat' : 'AI Chat'}
+                                </button>
+                                <button
+                                    onClick={handleExportMarkdown}
+                                    className="px-4 py-2 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 text-sm transition-all flex items-center gap-2"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                                              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    Export as Markdown
+                                </button>
+                            </>
                         )}
                         {selectedDoc && !selectedDoc.is_folder && (
                             <>
@@ -356,33 +336,40 @@ export const WorkspacePage: React.FC = () => {
                     backdrop-blur-sm bg-black/20 border-r border-white/10 flex flex-col overflow-hidden`}
                 >
                     {!sidebarCollapsed && (
-                        <>
-                            <FileTree
-                                documents={documents}
-                                selectedDoc={selectedDoc}
-                                vaultId={vaultId!}
-                                onSelect={handleSelectDocument}
-                                onDelete={isReadOnly ? () => {} : handleDeleteDocument}
-                                onMove={isReadOnly ? () => {} : handleMoveDocument}
-                                onRename={isReadOnly ? () => {} : handleRenameDocument}
-                                onCreate={isReadOnly ? () => {} : () => setShowCreateModal(true)}
-                                onRefresh={refetch}
-                            />
-                            <RelatedNotes
-                                documentId={selectedDoc?.id}
-                                onSelectDocument={(docId) => {
-                                    const doc = documents.find(d => d.id === docId);
-                                    if (doc) handleSelectDocument(doc);
-                                }}
-                            />
-                            <Backlinks
-                                documentId={selectedDoc?.id}
-                                onSelectDocument={(docId) => {
-                                    const doc = documents.find(d => d.id === docId);
-                                    if (doc) handleSelectDocument(doc);
-                                }}
-                            />
-                        </>
+                        <div className="flex flex-col h-full overflow-hidden">
+                            <div className="flex-1 min-h-0 overflow-hidden">
+                                <FileTree
+                                    documents={documents}
+                                    selectedDoc={selectedDoc}
+                                    vaultId={vaultId!}
+                                    onSelect={handleSelectDocument}
+                                    onDelete={isReadOnly ? () => {} : handleDeleteDocument}
+                                    onMove={isReadOnly ? () => {} : handleMoveDocument}
+                                    onRename={isReadOnly ? () => {} : handleRenameDocument}
+                                    onCreate={isReadOnly ? () => {} : () => setShowCreateModal(true)}
+                                    onRefresh={refetch}
+                                />
+                            </div>
+                            <div className="max-h-[200px] overflow-y-auto custom-scrollbar shrink-0">
+                                <RelatedNotes
+                                    documentId={selectedDoc?.id}
+                                    onSelectDocument={(docId) => {
+                                        const doc = documents.find(d => d.id === docId);
+                                        if (doc) handleSelectDocument(doc);
+                                    }}
+                                />
+                            </div>
+                            <div className="max-h-[280px] overflow-y-auto custom-scrollbar shrink-0">
+                                <NoteConnections
+                                    documentId={selectedDoc?.id}
+                                    vaultId={vaultId}
+                                    onSelectDocument={(docId) => {
+                                        const doc = documents.find(d => d.id === docId);
+                                        if (doc) handleSelectDocument(doc);
+                                    }}
+                                />
+                            </div>
+                        </div>
                     )}
                 </aside>
 
@@ -405,7 +392,6 @@ export const WorkspacePage: React.FC = () => {
                     {selectedDoc && !selectedDoc.is_folder ? (
                         <div className="flex-1 flex flex-col overflow-hidden">
                             {previewFile ? (
-                                // Show inline preview instead of editor
                                 <div className="flex-1 flex flex-col overflow-hidden">
                                     {/* Preview Header */}
                                     <div className="flex items-center justify-between px-6 py-4 bg-black/40 border-b border-white/10">
@@ -523,7 +509,6 @@ export const WorkspacePage: React.FC = () => {
                                     </div>
                                 </div>
                             ) : (
-                                // Show editor for text documents
                                 <TiptapEditor
                                     ref={editorRef}
                                     key={selectedDoc.id}
@@ -556,8 +541,10 @@ export const WorkspacePage: React.FC = () => {
                     ) : (
                         <div className="flex-1 flex items-center justify-center">
                             <div className="text-center">
-                                <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-white/5 flex items-center justify-center text-3xl">
-                                    📄
+                                <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-white/5 flex items-center justify-center">
+                                    <svg className="w-12 h-12 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
                                 </div>
                                 <h3 className="text-white/60 text-lg font-medium mb-2">No document selected</h3>
                                 <p className="text-white/40 text-sm">Select a file from the sidebar to start collaborating</p>
@@ -575,7 +562,6 @@ export const WorkspacePage: React.FC = () => {
                                 if (doc) {
                                     handleSelectDocument(doc);
                                 } else {
-                                    // Document might be in another vault — navigate via URL
                                     navigate(`/workspace/${vaultId}?doc=${docId}`);
                                 }
                             }}
@@ -627,6 +613,16 @@ export const WorkspacePage: React.FC = () => {
                     />
                 </div>
             )}
+
+            {/* Chat Panel */}
+            {showChat && selectedDoc && !selectedDoc.is_folder && (
+                <div className="fixed right-0 top-0 h-screen w-96 z-50 shadow-2xl">
+                    <DocumentChat
+                        documentId={selectedDoc.id}
+                        onClose={() => setShowChat(false)}
+                    />
+                </div>
+            )}
         </div>
     );
 };
@@ -644,7 +640,7 @@ const CreateDocumentModal: React.FC<{
             <div onClick={e => e.stopPropagation()} className="max-w-xl w-full">
                 <GlassCard>
                     <div className="p-10">
-                        <h2 className="text-3xl font-semibold text-white mb-8">Создать новый элемент</h2>
+                        <h2 className="text-3xl font-semibold text-white mb-8">Create New Item</h2>
                         <div className="space-y-6">
                             <div className="grid grid-cols-2 gap-4">
                                 <button
@@ -655,9 +651,11 @@ const CreateDocumentModal: React.FC<{
                                             : 'bg-white/10 hover:bg-white/15'
                                     }`}
                                 >
-                                    <div className="text-5xl mb-3">📄</div>
-                                    <p className="text-white font-medium text-lg">Документ</p>
-                                    <p className="text-white/60 text-sm mt-2">Файл для редактирования</p>
+                                    <svg className="w-12 h-12 mx-auto mb-3 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <p className="text-white font-medium text-lg">Document</p>
+                                    <p className="text-white/60 text-sm mt-2">A file for editing</p>
                                 </button>
                                 <button
                                     onClick={() => setForm(p => ({ ...p, is_folder: true }))}
@@ -667,20 +665,22 @@ const CreateDocumentModal: React.FC<{
                                             : 'bg-white/10 hover:bg-white/15'
                                     }`}
                                 >
-                                    <div className="text-5xl mb-3">📁</div>
-                                    <p className="text-white font-medium text-lg">Папка</p>
-                                    <p className="text-white/60 text-sm mt-2">Для организации файлов</p>
+                                    <svg className="w-12 h-12 mx-auto mb-3 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                                    </svg>
+                                    <p className="text-white font-medium text-lg">Folder</p>
+                                    <p className="text-white/60 text-sm mt-2">Organize your files</p>
                                 </button>
                             </div>
                             <div>
                                 <label className="block text-white/80 text-base mb-3 font-medium">
-                                    Название {form.is_folder ? 'папки' : 'документа'}
+                                    {form.is_folder ? 'Folder' : 'Document'} name
                                 </label>
                                 <input
                                     type="text"
                                     value={form.title}
                                     onChange={(e) => setForm(p => ({ ...p, title: e.target.value }))}
-                                    placeholder={form.is_folder ? "Моя папка..." : "Мой документ..."}
+                                    placeholder={form.is_folder ? "My folder..." : "My document..."}
                                     className="w-full px-6 py-4 text-lg rounded-2xl bg-white/10 border border-white/20 text-white placeholder:text-white/40 outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
                                     autoFocus
                                     onKeyDown={(e) => {
@@ -695,7 +695,7 @@ const CreateDocumentModal: React.FC<{
                                     onClick={onClose} 
                                     className="flex-1 px-6 py-4 rounded-2xl bg-white/10 text-white hover:bg-white/15 transition-all text-lg"
                                 >
-                                    Отмена
+                                    Cancel
                                 </button>
                                 <GradientButton 
                                     variant="blue" 
@@ -703,7 +703,7 @@ const CreateDocumentModal: React.FC<{
                                     className="flex-1 py-4 text-lg"
                                     disabled={!form.title.trim()}
                                 >
-                                    Создать
+                                    Create
                                 </GradientButton>
                             </div>
                         </div>

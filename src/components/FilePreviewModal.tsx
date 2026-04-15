@@ -29,10 +29,8 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
       setIsLoading(true);
       setError(null);
       setZoom(100);
-      // Prevent body scroll when modal is open
       document.body.style.overflow = 'hidden';
       
-      // Handle ESC key
       const handleEsc = (e: KeyboardEvent) => {
         if (e.key === 'Escape') {
           onClose();
@@ -87,7 +85,6 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
       );
     }
 
-    // Image preview
     if (isImageFile(filename)) {
       return (
         <div className="flex items-center justify-center h-full overflow-auto p-8">
@@ -112,7 +109,6 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
       );
     }
 
-    // Video preview
     if (isVideoFile(filename)) {
       return (
         <div className="flex items-center justify-center h-full p-8">
@@ -137,7 +133,6 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
       );
     }
 
-    // PDF preview
     if (isPdfFile(filename)) {
       return (
         <div className="flex items-center justify-center h-full p-8">
@@ -160,7 +155,6 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
       );
     }
 
-    // Unsupported file type
     return (
       <div className="flex flex-col items-center justify-center h-full text-white/60">
         <svg className="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

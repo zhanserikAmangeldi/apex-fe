@@ -23,8 +23,8 @@ export const Input: React.FC<InputProps> = ({ placeholder, type = 'text', value,
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
                     onBlur={onBlur}
-                    className={`w-full px-4 py-3.5 bg-transparent border rounded-xl text-white placeholder-white/70 text-lg 
-            focus:outline-none transition-colors ${error ? 'border-red-500 focus:border-red-400' : 'border-white/80 focus:border-purple-400'}`}
+                    className={`w-full px-4 py-3 bg-transparent border rounded-xl text-white placeholder-white/70 text-sm 
+            focus:outline-none transition-colors ${error ? 'border-red-500 focus:border-red-400' : 'border-white/20 focus:border-purple-400'}`}
                 />
                 {isPassword && (
                     <button

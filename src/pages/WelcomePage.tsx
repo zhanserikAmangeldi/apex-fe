@@ -40,11 +40,11 @@ export const WelcomePage: React.FC = () => {
                 </GradientButton>
             </main>
 
-            <div className="absolute bottom-0 left-0 right-0 h-64 pointer-events-none opacity-30">
+            <div className="absolute bottom-0 left-0 right-0 h-64 pointer-events-none opacity-70">
                 <svg className="w-full h-full" viewBox="0 0 1440 256" preserveAspectRatio="none">
-                    {[...Array(40)].map((_, i) => (
-                        <path key={i} d={`M0 ${256 - i * 4} Q360 ${200 - i * 3} 720 ${220 - i * 3} T1440 ${256 - i * 4}`}
-                              stroke={`rgba(100, 100, 255, ${0.1 + i * 0.02})`} strokeWidth="1" fill="none" />
+                    {[...Array(12)].map((_, i) => (
+                        <path key={i} d={`M0 ${250 - i * 18} C240 ${190 - i * 18} 480 ${270 - i * 18} 720 ${220 - i * 18} C960 ${170 - i * 18} 1200 ${260 - i * 18} 1440 ${250 - i * 18}`}
+                              stroke={`rgba(100, 100, 255, ${0.15 + i * 0.05})`} strokeWidth="2.5" fill="none" />
                     ))}
                 </svg>
             </div>

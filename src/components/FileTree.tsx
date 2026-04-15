@@ -47,7 +47,6 @@ export const FileTree: React.FC<FileTreeProps> = ({
     const handleContextMenu = (e: React.MouseEvent, item: AppDocument) => {
         e.preventDefault();
         e.stopPropagation();
-        console.log('Context menu triggered at:', { clientX: e.clientX, clientY: e.clientY, pageX: e.pageX, pageY: e.pageY });
         setContextMenu({ x: e.clientX, y: e.clientY, item });
     };
 
@@ -143,8 +142,8 @@ export const FileTree: React.FC<FileTreeProps> = ({
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
                         </div>
-                        <p className="text-white/60 text-sm mb-2">Нет файлов</p>
-                        <p className="text-white/40 text-xs">Нажмите + чтобы создать первый файл</p>
+                        <p className="text-white/60 text-sm mb-2">No files yet</p>
+                        <p className="text-white/40 text-xs">Click + to create your first file</p>
                     </div>
                 ) : (
                     buildTree(documents).map(doc => (
@@ -460,7 +459,6 @@ const ContextMenu: React.FC<{
     const menuRef = useRef<HTMLDivElement>(null);
     const [position, setPosition] = useState({ x, y });
 
-    // Корректируем позицию после рендера, если меню выходит за границы
     useEffect(() => {
         if (menuRef.current) {
             const menuRect = menuRef.current.getBoundingClientRect();
@@ -470,31 +468,17 @@ const ContextMenu: React.FC<{
             let adjustedX = x;
             let adjustedY = y;
 
-            console.log('Menu positioning:', { 
-                x, y, 
-                menuWidth: menuRect.width, 
-                menuHeight: menuRect.height,
-                viewportWidth, 
-                viewportHeight 
-            });
-
-            // Если меню выходит за правую границу, показываем слева от курсора
             if (x + menuRect.width > viewportWidth) {
                 adjustedX = x - menuRect.width;
             }
 
-            // Если меню выходит за нижнюю границу, показываем выше курсора
             if (y + menuRect.height > viewportHeight) {
                 adjustedY = y - menuRect.height;
             }
 
-            // Убеждаемся, что меню не выходит за левую и верхнюю границы
             adjustedX = Math.max(10, adjustedX);
             adjustedY = Math.max(10, adjustedY);
 
-            console.log('Adjusted position:', { adjustedX, adjustedY });
-
-            // Обновляем только если позиция изменилась
             if (adjustedX !== position.x || adjustedY !== position.y) {
                 setPosition({ x: adjustedX, y: adjustedY });
             }
@@ -529,13 +513,13 @@ const ContextMenu: React.FC<{
                         onClick={onClose}
                         className="flex-1 px-3 py-1.5 text-xs text-white/60 hover:bg-white/10 rounded-lg transition-colors"
                     >
-                        Отмена
+                        Cancel
                     </button>
                     <button
                         onClick={() => newTitle.trim() && onRename(newTitle.trim())}
                         className="flex-1 px-3 py-1.5 text-xs text-purple-400 hover:bg-purple-500/20 rounded-lg transition-colors"
                     >
-                        Сохранить
+                        Save
                     </button>
                 </div>
             </div>
@@ -576,7 +560,7 @@ const ContextMenu: React.FC<{
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                           d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
-                Переименовать
+                Rename
             </button>
             
             <button
@@ -587,7 +571,7 @@ const ContextMenu: React.FC<{
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                           d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
-                Удалить
+                Delete
             </button>
         </div>
     );

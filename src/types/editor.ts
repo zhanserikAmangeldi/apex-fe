@@ -99,3 +99,21 @@ export interface CreateTagRequest {
     name: string;
     color?: string;
 }
+
+export interface NoteConnection {
+    id: string;
+    source_note_id: string;
+    target_note_id: string;
+    connection_type: string;
+    description: string | null;
+    is_inline: boolean;
+    created_by: string;
+    created_at: string;
+    updated_at: string;
+    connected_note_id: string;
+    connected_note_title: string;
+    connected_note_icon: string | null;
+    direction: 'outgoing' | 'incoming';
+}
+
+export type ConnectionType = 'related' | 'supports' | 'contradicts' | 'extends' | 'references' | 'inspired_by';

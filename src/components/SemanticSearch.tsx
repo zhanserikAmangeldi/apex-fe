@@ -11,7 +11,7 @@ interface SemanticSearchProps {
 
 export const SemanticSearch: React.FC<SemanticSearchProps> = ({ vaultId, onSelectDocument, onClose }) => {
     const [mode, setMode] = useState<'ai' | 'text'>('ai');
-    const { results: aiResults, loading: aiLoading, error: aiError, search: aiSearch, clear: aiClear } = useSemanticSearch();
+    const { results: aiResults, loading: aiLoading, error: aiError, search: aiSearch } = useSemanticSearch(vaultId);
     const [textResults, setTextResults] = useState<FullTextResult[]>([]);
     const [textLoading, setTextLoading] = useState(false);
     const [inputValue, setInputValue] = useState('');

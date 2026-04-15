@@ -68,7 +68,6 @@ export const SharedWithMePage: React.FC = () => {
                     <h2 className="text-2xl font-semibold text-white mb-6">Vaults</h2>
                     {sharedVaults.length === 0 ? (
                         <div className="bg-white/5 border border-white/10 rounded-xl p-12 text-center">
-                            <div className="text-5xl mb-4">📦</div>
                             <p className="text-white/60">No vaults shared with you yet</p>
                         </div>
                     ) : (
@@ -103,7 +102,6 @@ export const SharedWithMePage: React.FC = () => {
                     <h2 className="text-2xl font-semibold text-white mb-6">Documents</h2>
                     {sharedDocuments.length === 0 ? (
                         <div className="bg-white/5 border border-white/10 rounded-xl p-12 text-center">
-                            <div className="text-5xl mb-4">📄</div>
                             <p className="text-white/60">No documents shared with you yet</p>
                         </div>
                     ) : (
@@ -115,9 +113,15 @@ export const SharedWithMePage: React.FC = () => {
                                     className="bg-white/5 border border-white/10 rounded-xl p-5 cursor-pointer hover:bg-white/10 hover:border-white/20 transition-all duration-200 flex items-center justify-between group"
                                 >
                                     <div className="flex items-center gap-4">
-                                        <span className="text-3xl transition-transform duration-200">
-                                            {doc.is_folder ? '📁' : '📄'}
-                                        </span>
+                                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                                            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                {doc.is_folder ? (
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                                                ) : (
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                )}
+                                            </svg>
+                                        </div>
                                         <div>
                                             <h3 className="text-white font-medium text-lg">{doc.title}</h3>
                                             <p className="text-xs text-white/40 mt-1">

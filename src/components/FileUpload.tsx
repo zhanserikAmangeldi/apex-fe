@@ -81,23 +81,13 @@ export const FileUpload: React.FC<FileUploadProps> = ({ vaultId, parentId, onUpl
 
     const uploadSingleFile = async (file: File) => {
         try {
-            // Create document for the file
             const document = await editorApi.createDocument(vaultId, {
                 title: file.name,
                 parent_id: parentId || null,
                 is_folder: false,
             });
 
-            // Update progress
             setUploadProgress(prev => ({ ...prev, [file.name]: 30 }));
-
-            // Upload file as attachment
-            console.log('Uploading file:', {
-                name: file.name,
-                type: file.type,
-                size: file.size,
-                documentId: document.id
-            });
 
             const { uploadUrl } = await editorApi.initiateAttachmentUpload(
                 document.id,
@@ -110,7 +100,6 @@ export const FileUpload: React.FC<FileUploadProps> = ({ vaultId, parentId, onUpl
 
             await editorApi.uploadAttachment(uploadUrl, file);
 
-            // Update progress
             setUploadProgress(prev => ({ ...prev, [file.name]: 100 }));
         } catch (error) {
             console.error(`Failed to upload ${file.name}:`, error);
