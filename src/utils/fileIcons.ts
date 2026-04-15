@@ -18,7 +18,7 @@ export const getFolderIcon = (
   if (customIcon) {
     return customIcon;
   }
-  return getMaterialFolderIcon(folderName, isOpen ? 1 : 0);
+  return getMaterialFolderIcon(folderName, isOpen);
 };
 
 export const getDocumentIcon = (

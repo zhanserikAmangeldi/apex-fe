@@ -31,7 +31,7 @@ export const ManageAccessModal: React.FC<ManageAccessModalProps> = ({ type, id, 
             } else {
                 data = await editorApi.getDocumentCollaborators(id);
             }
-            setCollaborators(data.collaborators || data);
+            setCollaborators((data as any).collaborators || data);
         } catch (error) {
         } finally {
             setLoading(false);

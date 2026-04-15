@@ -37,7 +37,7 @@ export const AttachmentManager: React.FC<AttachmentManagerProps> = ({ documentId
 
         setUploading(true);
         try {
-            const { attachmentId, uploadUrl } = await editorApi.initiateAttachmentUpload(
+            const { uploadUrl } = await editorApi.initiateAttachmentUpload(
                 documentId,
                 file.name,
                 file.type,

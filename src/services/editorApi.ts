@@ -1,4 +1,4 @@
-import { httpClient, rawRequest, getAccessToken } from './httpClient';
+import { httpClient, getAccessToken } from './httpClient';
 import type { AppDocument, CreateDocumentRequest, CreateVaultRequest, Vault, NoteConnection, ConnectionType } from '../types/editor';
 
 const EDITOR_BASE = 'editor-service/api/v1';

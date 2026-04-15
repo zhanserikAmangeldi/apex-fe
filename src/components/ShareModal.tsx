@@ -46,7 +46,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ type, id, onClose, onSuc
         try {
             const data = await editorApi.getDocumentCollaborators(id);
             // API может вернуть { collaborators: [...] } или просто массив
-            const collabList = Array.isArray(data) ? data : (data.collaborators || []);
+            const collabList = Array.isArray(data) ? data : ((data as any).collaborators || []);
             setCollaborators(collabList);
             setShowCollaborators(true);
         } catch (error) {
