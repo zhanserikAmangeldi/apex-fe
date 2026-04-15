@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { TiptapEditor } from '../components/TiptapEditor';
 import { AttachmentManager } from '../components/AttachmentManager';
 import { ManageAccessModal } from '../components/ManageAccessModal';
+import { DocumentChat } from '../components/DocumentChat';
 import { editorApi } from '../services/editorApi';
 import type { AppDocument } from '../types/editor';
 
@@ -13,6 +14,7 @@ export const DocumentViewPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showManageAccess, setShowManageAccess] = useState(false);
+    const [showChat, setShowChat] = useState(false);
 
     useEffect(() => {
         if (documentId) {
@@ -91,6 +93,15 @@ export const DocumentViewPage: React.FC = () => {
                                 Read Only
                             </span>
                         )}
+                        <button
+                            onClick={() => setShowChat(!showChat)}
+                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm flex items-center gap-2"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                            </svg>
+                            {showChat ? 'Hide Chat' : 'AI Chat'}
+                        </button>
                         {canManageAccess && (
                             <button
                                 onClick={() => setShowManageAccess(true)}
@@ -174,6 +185,16 @@ export const DocumentViewPage: React.FC = () => {
                     </div>
                 </div>
             </main>
+
+            {/* Chat Panel */}
+            {showChat && (
+                <div className="fixed right-0 top-0 h-screen w-96 z-50 shadow-2xl">
+                    <DocumentChat
+                        documentId={documentId!}
+                        onClose={() => setShowChat(false)}
+                    />
+                </div>
+            )}
 
             {/* Manage Access Modal */}
             {showManageAccess && (

@@ -47,7 +47,7 @@ export const FileIcon: React.FC<FileIconProps> = ({
         const target = e.target as HTMLImageElement;
         target.style.display = 'none';
         const fallback = document.createElement('span');
-        fallback.textContent = isFolder ? '📁' : '📄';
+        fallback.textContent = isFolder ? '▶' : '•';
         fallback.style.fontSize = `${size}px`;
         target.parentNode?.insertBefore(fallback, target);
       }}

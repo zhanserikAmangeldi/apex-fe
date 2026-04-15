@@ -18,12 +18,12 @@ const CONNECTION_COLORS: Record<string, string> = {
 };
 
 const CONNECTION_ICONS: Record<string, string> = {
-    related: '🔗',
-    supports: '✅',
-    contradicts: '⚡',
-    extends: '📎',
-    references: '📌',
-    inspired_by: '💡',
+    related: '→',
+    supports: '✓',
+    contradicts: '✗',
+    extends: '+',
+    references: '↗',
+    inspired_by: '★',
 };
 
 const ALL_TYPES: ConnectionType[] = ['related', 'supports', 'contradicts', 'extends', 'references', 'inspired_by'];
@@ -116,7 +116,7 @@ export const NoteConnections: React.FC<NoteConnectionsProps> = ({ documentId, va
                         style={{ backgroundColor: CONNECTION_COLORS[conn.connection_type] || '#8b5cf6' }}
                     />
                     <span className="text-xs shrink-0" title={conn.connection_type.replace(/_/g, ' ')}>
-                        {CONNECTION_ICONS[conn.connection_type] || '🔗'}
+                        {CONNECTION_ICONS[conn.connection_type] || '→'}
                     </span>
                     <span className="text-sm text-gray-300 group-hover:text-white truncate">
                         {conn.connected_note_title || 'Untitled'}
@@ -196,7 +196,8 @@ export const NoteConnections: React.FC<NoteConnectionsProps> = ({ documentId, va
                     <select
                         value={selectedType}
                         onChange={(e) => setSelectedType(e.target.value as ConnectionType)}
-                        className="w-full px-2 py-1.5 rounded bg-white/10 border border-white/20 text-white text-xs outline-none focus:ring-1 focus:ring-indigo-500/50"
+                        className="w-full px-2 py-1.5 rounded bg-white/10 border border-white/20 text-white text-xs outline-none focus:ring-1 focus:ring-indigo-500/50 appearance-none cursor-pointer"
+                        style={{ WebkitAppearance: 'none', MozAppearance: 'none' }}
                     >
                         {ALL_TYPES.map((type) => (
                             <option key={type} value={type} className="bg-gray-900">
@@ -224,7 +225,7 @@ export const NoteConnections: React.FC<NoteConnectionsProps> = ({ documentId, va
                             onClick={() => handleCreateConnection(doc.id)}
                             className="w-full text-left px-2 py-1.5 rounded hover:bg-indigo-500/20 transition-colors flex items-center gap-2 text-xs"
                         >
-                            <span>{doc.icon || '📄'}</span>
+                            <span className="text-xs">{doc.icon || '•'}</span>
                             <span className="text-gray-300 truncate">{doc.title}</span>
                         </button>
                     ))}

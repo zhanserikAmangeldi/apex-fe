@@ -46,7 +46,7 @@ export const RegisterPage: React.FC = () => {
                 bottom: "linear-gradient(180deg, #000F61 0%, #0A1730 100%)"
             }}
         >
-            <div className="space-y-5">
+            <div className="space-y-4">
                 <div>
                     <h2 className="text-3xl font-semibold text-white">Signup</h2>
                     <p className="text-white/70 text-sm">Just some details to get you in.!</p>

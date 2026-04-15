@@ -64,6 +64,12 @@ export const DashboardPage: React.FC = () => {
 
                 <div className="flex items-center gap-4">
                     <button
+                        onClick={() => navigate('/scraper')}
+                        className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm transition-all shadow-lg"
+                    >
+                        Web Scraper
+                    </button>
+                    <button
                         onClick={() => navigate('/shared')}
                         className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm transition-all"
                     >
@@ -107,13 +113,12 @@ export const DashboardPage: React.FC = () => {
                             placeholder="Search vaults..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full px-6 py-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+                            className="w-full px-4 py-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
                         />
                     </div>
                     <GradientButton
                         variant="blue"
                         onClick={() => setShowCreateModal(true)}
-                        className="px-6 py-3"
                     >
                         + New Vault
                     </GradientButton>
@@ -262,12 +267,12 @@ const CreateVaultModal: React.FC<{
     const [form, setForm] = useState<CreateVaultRequest>({
         name: '',
         description: '',
-        icon: '📁',
+        icon: 'F',
         color: '#a855f7'
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const icons = ['📁', '📝', '💼', '🎓', '🏠', '💡', '🎨', '🔬', '📚', '🎯'];
+    const icons = ['F', 'D', 'P', 'W', 'N', 'A', 'B', 'C', 'S', 'T'];
     const colors = [
         { name: 'Purple', value: '#a855f7', gradient: 'from-purple-500 to-pink-500' },
         { name: 'Blue', value: '#3b82f6', gradient: 'from-blue-500 to-purple-500' },
@@ -293,10 +298,10 @@ const CreateVaultModal: React.FC<{
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
             <div onClick={e => e.stopPropagation()} className="max-w-2xl w-full">
-                <GlassCard className="max-w-4xl">
-                    <div className="p-8 sm:p-12">
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-3xl font-semibold text-white">Create New Vault</h2>
+                <GlassCard>
+                    <div className="space-y-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-2xl font-semibold text-white">Create New Vault</h2>
                             <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
                                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -304,7 +309,7 @@ const CreateVaultModal: React.FC<{
                             </button>
                         </div>
 
-                        <div className="space-y-6">
+                        <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-6">
                                 <div>
                                     <label className="block text-white/80 text-sm font-medium mb-3">Icon</label>
@@ -342,7 +347,7 @@ const CreateVaultModal: React.FC<{
                                     type="text"
                                     value={form.name}
                                     onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))}
-                                    className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                    className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                                     autoFocus
                                 />
                             </div>
@@ -352,13 +357,13 @@ const CreateVaultModal: React.FC<{
                                 <textarea
                                     value={form.description}
                                     onChange={(e) => setForm(p => ({ ...p, description: e.target.value }))}
-                                    className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 resize-none"
+                                    className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 resize-none"
                                     rows={3}
                                 />
                             </div>
 
-                            <div className="flex gap-3 pt-4">
-                                <button onClick={onClose} className="flex-1 px-6 py-3 rounded-xl bg-white/10 text-white hover:bg-white/20 transition-colors">
+                            <div className="flex gap-4 pt-4">
+                                <button onClick={onClose} className="flex-1 px-6 py-3 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20 transition-colors">
                                     Cancel
                                 </button>
                                 <GradientButton

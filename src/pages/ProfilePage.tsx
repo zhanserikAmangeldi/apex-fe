@@ -146,9 +146,9 @@ export const ProfilePage: React.FC = () => {
             </header>
 
             <main className="relative z-10 px-6 py-12 max-w-4xl mx-auto">
-                <GlassCard className="p-6">
+                <GlassCard>
                     <div className="flex items-start gap-6">
-                        <div className="flex flex-col items-center gap-3">
+                        <div className="flex flex-col items-center gap-4">
                             <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center overflow-hidden">
                                 {isUploadingAvatar && (
                                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10">
@@ -184,30 +184,31 @@ export const ProfilePage: React.FC = () => {
                             </div>
 
                             {isEditing ? (
-                                <div className="space-y-3">
+                                <div className="space-y-4">
                                     <div>
-                                        <label className="text-white/80 text-xs block mb-1">Display Name</label>
+                                        <label className="text-white/80 text-sm block mb-2">Display Name</label>
                                         <input
                                             type="text"
                                             value={formData.display_name}
                                             onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
-                                            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm"
+                                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm"
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-white/80 text-xs block mb-1">Bio</label>
+                                        <label className="text-white/80 text-sm block mb-2">Bio</label>
                                         <textarea
                                             value={formData.bio}
                                             onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                                            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm h-20 resize-none"
+                                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm h-20 resize-none"
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-white/80 text-xs block mb-1">Status</label>
+                                        <label className="text-white/80 text-sm block mb-2">Status</label>
                                         <select
                                             value={formData.status}
                                             onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                                            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm"
+                                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm appearance-none cursor-pointer"
+                                            style={{ WebkitAppearance: 'none', MozAppearance: 'none' }}
                                         >
                                             <option value="active">Active</option>
                                             <option value="away">Away</option>
@@ -217,35 +218,35 @@ export const ProfilePage: React.FC = () => {
                                     <div className="flex gap-2 pt-2">
                                         <button
                                             onClick={handleUpdateProfile}
-                                            className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm transition-all"
+                                            className="px-6 py-3 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm transition-all"
                                         >
                                             Save
                                         </button>
                                         <button
                                             onClick={() => setIsEditing(false)}
-                                            className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm transition-colors"
+                                            className="px-6 py-3 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm transition-colors"
                                         >
                                             Cancel
                                         </button>
                                     </div>
                                 </div>
                             ) : (
-                                <div className="space-y-3">
+                                <div className="space-y-4">
                                     <div>
-                                        <p className="text-white/60 text-xs">Display Name</p>
+                                        <p className="text-white/60 text-sm">Display Name</p>
                                         <p className="text-white text-sm">{user?.display_name || 'Not set'}</p>
                                     </div>
                                     <div>
-                                        <p className="text-white/60 text-xs">Bio</p>
+                                        <p className="text-white/60 text-sm">Bio</p>
                                         <p className="text-white text-sm">{user?.bio || 'No bio yet'}</p>
                                     </div>
                                     <div>
-                                        <p className="text-white/60 text-xs">Status</p>
+                                        <p className="text-white/60 text-sm">Status</p>
                                         <p className="text-white text-sm capitalize">{user?.status || 'active'}</p>
                                     </div>
                                     <button
                                         onClick={() => setIsEditing(true)}
-                                        className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm transition-all mt-2"
+                                        className="px-6 py-3 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm transition-all mt-2"
                                     >
                                         Edit Profile
                                     </button>
@@ -255,19 +256,19 @@ export const ProfilePage: React.FC = () => {
                     </div>
                 </GlassCard>
 
-                <GlassCard className="p-6 mt-4">
+                <GlassCard>
                     <h3 className="text-white text-lg font-bold mb-4">Session Management</h3>
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                         <div className="flex gap-2">
                             <button
                                 onClick={loadSessions}
-                                className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm transition-all"
+                                className="px-6 py-3 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm transition-all"
                             >
                                 View Active Sessions
                             </button>
                             <button
                                 onClick={handleLogoutAll}
-                                className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 text-sm transition-colors"
+                                className="px-6 py-3 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 text-sm transition-colors"
                             >
                                 Logout All Devices
                             </button>

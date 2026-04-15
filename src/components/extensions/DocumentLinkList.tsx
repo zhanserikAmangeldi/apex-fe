@@ -11,12 +11,12 @@ interface DocumentLinkListProps {
 }
 
 const CONNECTION_TYPES: Array<{ value: ConnectionType; label: string; icon: string }> = [
-    { value: 'references', label: 'References', icon: '📌' },
-    { value: 'related', label: 'Related', icon: '🔗' },
-    { value: 'supports', label: 'Supports', icon: '✅' },
-    { value: 'contradicts', label: 'Contradicts', icon: '⚡' },
-    { value: 'extends', label: 'Extends', icon: '📎' },
-    { value: 'inspired_by', label: 'Inspired by', icon: '💡' },
+    { value: 'references', label: 'References', icon: '↗' },
+    { value: 'related', label: 'Related', icon: '→' },
+    { value: 'supports', label: 'Supports', icon: '✓' },
+    { value: 'contradicts', label: 'Contradicts', icon: '✗' },
+    { value: 'extends', label: 'Extends', icon: '+' },
+    { value: 'inspired_by', label: 'Inspired by', icon: '★' },
 ];
 
 export const DocumentLinkList = forwardRef((props: DocumentLinkListProps, ref) => {
@@ -97,7 +97,7 @@ export const DocumentLinkList = forwardRef((props: DocumentLinkListProps, ref) =
         return (
             <div className="bg-[#1a1a1a] border border-white/10 rounded-lg shadow-xl p-2 min-w-[220px]">
                 <div className="text-white/40 text-[11px] px-3 py-1 mb-1 flex items-center gap-1.5">
-                    <span>{selectedDoc.icon || '📄'}</span>
+                    <span className="text-xs">{selectedDoc.icon || '•'}</span>
                     <span className="truncate">{selectedDoc.label}</span>
                 </div>
                 <div className="border-t border-white/10 my-1" />

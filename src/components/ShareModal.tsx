@@ -45,38 +45,42 @@ export const ShareModal: React.FC<ShareModalProps> = ({ type, id, onClose, onSuc
         
         try {
             const data = await editorApi.getDocumentCollaborators(id);
-            setCollaborators(data);
+            // API может вернуть { collaborators: [...] } или просто массив
+            const collabList = Array.isArray(data) ? data : (data.collaborators || []);
+            setCollaborators(collabList);
             setShowCollaborators(true);
         } catch (error) {
             console.error('Failed to load collaborators:', error);
+            setCollaborators([]);
         }
     };
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-6">
-            <div className="bg-[#1A1A1A] border border-white/10 rounded-3xl p-10 w-full max-w-xl">
-                <h2 className="text-white text-3xl font-bold mb-8">
+            <div className="bg-[#1A1A1A] border border-white/10 rounded-xl p-8 w-full max-w-xl">
+                <h2 className="text-white text-2xl font-bold mb-6">
                     Share {type === 'vault' ? 'Vault' : 'Document'}
                 </h2>
 
-                <div className="space-y-6">
+                <div className="space-y-4">
                     <div>
-                        <label className="text-white/80 text-base block mb-3 font-medium">Email or User ID</label>
+                        <label className="text-white/80 text-sm block mb-2 font-medium">Email or User ID</label>
                         <input
                             type="text"
                             value={emailOrUserId}
                             onChange={(e) => setEmailOrUserId(e.target.value)}
                             placeholder="Enter email (e.g., user@example.com) or UUID"
-                            className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white text-base placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
                         />
                     </div>
 
                     <div>
-                        <label className="text-white/80 text-base block mb-3 font-medium">Permission</label>
+                        <label className="text-white/80 text-sm block mb-2 font-medium">Permission</label>
                         <select
                             value={permission}
                             onChange={(e) => setPermission(e.target.value as any)}
-                            className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white text-base cursor-pointer hover:bg-white/10 transition-colors"
+                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm cursor-pointer hover:bg-white/10 transition-colors appearance-none"
+                            style={{ WebkitAppearance: 'none', MozAppearance: 'none' }}
                         >
                             <option value="read">Read Only</option>
                             <option value="write">Read & Write</option>
@@ -87,30 +91,34 @@ export const ShareModal: React.FC<ShareModalProps> = ({ type, id, onClose, onSuc
                     {type === 'document' && (
                         <button
                             onClick={loadCollaborators}
-                            className="text-purple-400 hover:text-purple-300 text-base font-medium"
+                            className="text-purple-400 hover:text-purple-300 text-sm font-medium"
                         >
                             View Collaborators
                         </button>
                     )}
 
                     {showCollaborators && (
-                        <div className="max-h-48 overflow-y-auto space-y-3">
-                            {collaborators.map((collab, idx) => (
-                                <div key={idx} className="p-4 bg-white/5 rounded-xl text-base">
-                                    <p className="text-white font-mono">User ID: {collab.user_id}</p>
-                                    <p className="text-white/60 capitalize mt-1">{collab.permission}</p>
-                                </div>
-                            ))}
+                        <div className="max-h-48 overflow-y-auto space-y-2">
+                            {Array.isArray(collaborators) && collaborators.length > 0 ? (
+                                collaborators.map((collab, idx) => (
+                                    <div key={idx} className="p-4 bg-white/5 rounded-xl text-sm">
+                                        <p className="text-white font-mono">User ID: {collab.user_id}</p>
+                                        <p className="text-white/60 capitalize mt-1">{collab.permission}</p>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-white/60 text-sm">No collaborators yet</p>
+                            )}
                         </div>
                     )}
 
-                    <div className="flex gap-4 pt-6">
-                        <GradientButton onClick={handleShare} disabled={loading} className="flex-1 py-4 text-lg">
+                    <div className="flex gap-4 pt-4">
+                        <GradientButton onClick={handleShare} disabled={loading} className="flex-1">
                             {loading ? 'Sharing...' : 'Share'}
                         </GradientButton>
                         <button
                             onClick={onClose}
-                            className="flex-1 px-6 py-4 text-white/60 hover:text-white bg-white/5 hover:bg-white/10 rounded-2xl transition-colors text-lg"
+                            className="flex-1 px-6 py-3 text-white/60 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-sm"
                         >
                             Cancel
                         </button>

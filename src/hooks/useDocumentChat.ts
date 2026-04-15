@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { aiApi, ChatMessage, VideoResult } from '../services/aiApi';
+import { aiApi } from '../services/aiApi';
+import type { ChatMessage, VideoResult } from '../services/aiApi';
 
 export function useDocumentChat(documentId: string) {
     const [messages, setMessages] = useState<ChatMessage[]>([]);

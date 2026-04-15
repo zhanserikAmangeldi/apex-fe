@@ -14,12 +14,12 @@ interface BacklinkItem {
 }
 
 const CONNECTION_ICONS: Record<string, string> = {
-    related: '🔗',
-    supports: '✅',
-    contradicts: '⚡',
-    extends: '📎',
-    references: '📌',
-    inspired_by: '💡',
+    related: '→',
+    supports: '✓',
+    contradicts: '✗',
+    extends: '+',
+    references: '↗',
+    inspired_by: '★',
 };
 
 export const Backlinks: React.FC<BacklinksProps> = ({ documentId, onSelectDocument }) => {
@@ -83,7 +83,7 @@ export const Backlinks: React.FC<BacklinksProps> = ({ documentId, onSelectDocume
                         className="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 transition-colors group flex items-center gap-2"
                     >
                         <span className="text-xs shrink-0" title={link.connectionType}>
-                            {CONNECTION_ICONS[link.connectionType || 'related'] || '🔗'}
+                            {CONNECTION_ICONS[link.connectionType || 'related'] || '→'}
                         </span>
                         <span className="text-sm shrink-0">{link.icon}</span>
                         <span className="text-sm text-gray-300 group-hover:text-white truncate">
