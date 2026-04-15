@@ -86,7 +86,7 @@ export function GraphView({ vaultId, onNodeClick, onClose }: GraphViewProps) {
             
             const flowNodes: Node[] = data.nodes.map((node, index) => {
                 const angle = (index / data.nodes.length) * 2 * Math.PI;
-                const radius = Math.max(300, data.nodes.length * 20);
+                const radius = Math.max(400, data.nodes.length * 30);
 
                 let clusterColor: string | null = null;
                 if (showTopics && topicClusters.length > 0) {
@@ -129,10 +129,11 @@ export function GraphView({ vaultId, onNodeClick, onClose }: GraphViewProps) {
                     style: {
                         background: clusterColor ? `${clusterColor}20` : (node.isFolder ? '#1e293b' : '#0f172a'),
                         border: `2px solid ${clusterColor || node.tags[0]?.color || '#475569'}`,
-                        borderRadius: '12px',
-                        padding: '10px',
+                        borderRadius: '14px',
+                        padding: '12px',
                         width: 'auto',
-                        minWidth: '150px',
+                        minWidth: '160px',
+                        boxShadow: `0 4px 20px ${clusterColor ? `${clusterColor}15` : 'rgba(0,0,0,0.4)'}`,
                     },
                 };
             });

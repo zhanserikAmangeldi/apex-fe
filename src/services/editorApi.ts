@@ -232,6 +232,9 @@ class EditorApiService {
         const data = await httpClient.get<any>(`${EDITOR_BASE}/connections/types`);
         return data.types || [];
     }
+    async exportDocument(id: string, format: 'text' = 'text'): Promise<{ content: string }> {
+        return httpClient.get<{ content: string }>(`${EDITOR_BASE}/documents/${id}/export/${format}`);
+    }
 }
 
 export const editorApi = new EditorApiService();

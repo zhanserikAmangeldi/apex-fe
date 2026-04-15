@@ -1,6 +1,7 @@
 .graph-view-container {
     width: 100%;
-    height: 100vh;
+    height: 100%;
+    min-height: 100%;
     background: #0a0a0a;
 }
 
@@ -10,7 +11,8 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100vh;
+    height: 100%;
+    min-height: 400px;
     background: #0a0a0a;
     color: white;
 }
@@ -48,12 +50,13 @@
     flex-direction: column;
     align-items: center;
     gap: 6px;
-    padding: 4px;
+    padding: 6px;
 }
 
 .graph-node-icon {
-    font-size: 24px;
+    font-size: 26px;
     line-height: 1;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 .graph-node-title {
@@ -61,10 +64,11 @@
     font-size: 13px;
     font-weight: 500;
     text-align: center;
-    max-width: 150px;
+    max-width: 160px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 .graph-node-tags {
@@ -217,18 +221,21 @@
 /* React Flow Overrides */
 .react-flow__node {
     cursor: pointer;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .react-flow__node:hover {
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+    box-shadow: 0 0 24px rgba(139, 92, 246, 0.5), 0 0 48px rgba(139, 92, 246, 0.15);
+    transform: scale(1.03);
 }
 
 .react-flow__edge-path {
-    transition: stroke-width 0.2s;
+    transition: stroke-width 0.2s, opacity 0.2s;
 }
 
 .react-flow__edge:hover .react-flow__edge-path {
     stroke-width: 4px !important;
+    filter: drop-shadow(0 0 6px currentColor);
 }
 
 .react-flow__controls {

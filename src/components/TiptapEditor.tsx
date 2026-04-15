@@ -10,6 +10,7 @@ import { CommentHighlight } from './extensions/CommentHighlight';
 import { CommentsSidebar } from './CommentsSidebar';
 import { EditorToolbar } from './EditorToolbar';
 import { useNavigate } from 'react-router-dom';
+import { aiApi } from '../services/aiApi';
 
 interface Props {
     documentId: string;
@@ -17,6 +18,8 @@ interface Props {
     userName?: string;
     userColor?: string;
     readOnly?: boolean;
+    onExport?: () => void;
+    onShare?: () => void;
 }
 
 export interface TiptapEditorRef {
@@ -30,11 +33,14 @@ export const TiptapEditor = forwardRef<TiptapEditorRef, Props>(({
     vaultId,
     userName = 'Anonymous',
     userColor = '#6366f1',
-    readOnly = false
+    readOnly = false,
+    onExport,
+    onShare,
 }, ref) => {
     const [status, setStatus] = useState('connecting');
     const [provider, setProvider] = useState<HocuspocusProvider | null>(null);
     const [showComments, setShowComments] = useState(false);
+    const [readMarked, setReadMarked] = useState(false);
     const navigate = useNavigate();
 
     const ydoc = useMemo(() => new Y.Doc(), [documentId]);
@@ -123,21 +129,67 @@ export const TiptapEditor = forwardRef<TiptapEditorRef, Props>(({
                     </div>
                 </div>
 
-                {/* Comments toggle */}
-                <button
-                    onClick={() => setShowComments(!showComments)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                        showComments
-                            ? 'bg-purple-500/20 text-purple-300'
-                            : 'bg-white/5 text-white/60 hover:bg-white/10'
-                    }`}
-                >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                              d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                    </svg>
-                    Comments
-                </button>
+                {/* Comments & Read */}
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setShowComments(!showComments)}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                            showComments
+                                ? 'bg-purple-500/20 text-purple-300'
+                                : 'bg-white/5 text-white/60 hover:bg-white/10'
+                        }`}
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                  d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                        </svg>
+                        Comments
+                    </button>
+                    <button
+                        onClick={async () => {
+                            try {
+                                await aiApi.markAsRead(documentId);
+                                setReadMarked(true);
+                                setTimeout(() => setReadMarked(false), 2000);
+                            } catch {
+                                // no schedule yet
+                            }
+                        }}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                            readMarked
+                                ? 'bg-green-500/20 text-green-300'
+                                : 'bg-white/5 text-white/60 hover:bg-white/10'
+                        }`}
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {readMarked ? '✅ Done' : '✓ Read'}
+                    </button>
+                    {onExport && (
+                        <button
+                            onClick={onExport}
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors bg-white/5 text-white/60 hover:bg-white/10"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Export
+                        </button>
+                    )}
+                    {onShare && (
+                        <button
+                            onClick={onShare}
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors bg-white/5 text-white/60 hover:bg-white/10"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                            </svg>
+                            Share
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Formatting toolbar */}

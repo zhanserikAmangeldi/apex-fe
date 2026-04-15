@@ -152,6 +152,108 @@ class AiApiService {
         });
     }
 
+    // --- Flashcards ---
+
+    async generateFlashcards(
+        documentId: string,
+        vaultId: string,
+        title: string,
+        content: string
+    ): Promise<FlashcardGenerateResponse> {
+        return httpClient.post<FlashcardGenerateResponse>(`${AI_BASE}/flashcards/generate`, {
+            document_id: documentId,
+            vault_id: vaultId,
+            title,
+            content,
+        });
+    }
+
+    async getFlashcards(vaultId: string, dueOnly: boolean = false): Promise<FlashcardListResponse> {
+        const params = dueOnly ? '?due_only=true' : '';
+        return httpClient.get<FlashcardListResponse>(`${AI_BASE}/flashcards/${vaultId}${params}`);
+    }
+
+    async reviewFlashcard(cardId: string, quality: number): Promise<FlashcardReviewResponse> {
+        return httpClient.post<FlashcardReviewResponse>(`${AI_BASE}/flashcards/${cardId}/review`, {
+            quality,
+        });
+    }
+
+    async deleteFlashcard(cardId: string): Promise<void> {
+        await httpClient.delete(`${AI_BASE}/flashcards/${cardId}`);
+    }
+
+    async generateFlashcardsForVault(vaultId: string): Promise<FlashcardVaultGenerateResponse> {
+        return httpClient.post<FlashcardVaultGenerateResponse>(
+            `${AI_BASE}/flashcards/generate/vault/${vaultId}`,
+            {},
+        );
+    }
+
+    // --- Quiz ---
+
+    async generateQuiz(vaultId: string, numQuestions: number = 10): Promise<QuizGenerateResponse> {
+        return httpClient.post<QuizGenerateResponse>(`${AI_BASE}/quiz/generate`, {
+            vault_id: vaultId,
+            num_questions: numQuestions,
+        });
+    }
+
+    async submitQuiz(
+        vaultId: string,
+        answers: { document_id: string; question: string; correct: boolean }[]
+    ): Promise<QuizSubmitResponse> {
+        return httpClient.post<QuizSubmitResponse>(`${AI_BASE}/quiz/submit`, {
+            vault_id: vaultId,
+            answers,
+        });
+    }
+
+    // --- Progress ---
+
+    async getProgressDashboard(vaultId: string): Promise<ProgressDashboardResponse> {
+        return httpClient.get<ProgressDashboardResponse>(`${AI_BASE}/progress/${vaultId}`);
+    }
+
+    // --- Streaks ---
+
+    async getStreak(vaultId: string): Promise<StreakResponse> {
+        return httpClient.get<StreakResponse>(`${AI_BASE}/streaks/${vaultId}`);
+    }
+
+    async getForecast(vaultId: string): Promise<ForecastResponse> {
+        return httpClient.get<ForecastResponse>(`${AI_BASE}/forecast/${vaultId}`);
+    }
+
+    // --- Mixed Quiz ---
+
+    async generateMixedQuiz(vaultId: string, numQuestions: number = 10): Promise<MixedQuizGenerateResponse> {
+        return httpClient.post<MixedQuizGenerateResponse>(`${AI_BASE}/quiz/generate/mixed`, {
+            vault_id: vaultId,
+            num_questions: numQuestions,
+        });
+    }
+
+    async submitMixedQuiz(
+        vaultId: string,
+        answers: { document_id: string; question: string; question_type: string; correct: boolean }[]
+    ): Promise<QuizSubmitResponse> {
+        return httpClient.post<QuizSubmitResponse>(`${AI_BASE}/quiz/submit/mixed`, {
+            vault_id: vaultId,
+            answers,
+        });
+    }
+
+    // --- Spaced Reading ---
+
+    async getReadingList(vaultId: string): Promise<ReadingListResponse> {
+        return httpClient.get<ReadingListResponse>(`${AI_BASE}/reading/${vaultId}`);
+    }
+
+    async markAsRead(documentId: string): Promise<void> {
+        await httpClient.post(`${AI_BASE}/reading/${documentId}/mark-read`, {});
+    }
+
     async createStudyNotes(request: StudyNotesRequest): Promise<StudyNotesResponse> {
         console.log('createStudyNotes called with:', request);
         
@@ -258,3 +360,157 @@ Focus on extracting the most important information for studying.`;
 }
 
 export const aiApi = new AiApiService();
+
+
+// --- Flashcard Types ---
+
+export interface FlashcardData {
+    id: string;
+    document_id: string;
+    vault_id: string;
+    front: string;
+    back: string;
+    ease_factor: number;
+    interval_days: number;
+    reps: number;
+    next_review: string;
+    created_at: string;
+}
+
+export interface FlashcardGenerateResponse {
+    document_id: string;
+    cards: FlashcardData[];
+    count: number;
+}
+
+export interface FlashcardVaultGenerateResponse {
+    vault_id: string;
+    cards: FlashcardData[];
+    total_cards: number;
+    documents_processed: number;
+    documents_skipped: number;
+}
+
+export interface FlashcardListResponse {
+    cards: FlashcardData[];
+    total: number;
+    due: number;
+}
+
+export interface FlashcardReviewResponse {
+    id: string;
+    ease_factor: number;
+    interval_days: number;
+    reps: number;
+    next_review: string;
+}
+
+// --- Quiz Types ---
+
+export interface QuizOption {
+    text: string;
+    is_correct: boolean;
+}
+
+export interface QuizQuestion {
+    document_id: string;
+    question: string;
+    options: QuizOption[];
+    topic: string;
+}
+
+export interface QuizGenerateResponse {
+    questions: QuizQuestion[];
+    count: number;
+}
+
+export interface QuizSubmitResponse {
+    total: number;
+    correct: number;
+    xp_earned: number;
+    accuracy: number;
+}
+
+// --- Progress Types ---
+
+export interface TopicProgress {
+    topic: string;
+    attempts: number;
+    correct: number;
+    accuracy: number;
+    xp: number;
+    status: 'strong' | 'review' | 'weak';
+}
+
+export interface RecommendedNote {
+    document_id: string;
+    title: string;
+    score: number;
+}
+
+export interface AdaptiveRecommendation {
+    topic: string;
+    accuracy: number;
+    related_notes: RecommendedNote[];
+}
+
+export interface ProgressDashboardResponse {
+    topic_progress: TopicProgress[];
+    total_xp: number;
+    total_reviews: number;
+    cards_due: number;
+    recommendations: AdaptiveRecommendation[];
+}
+
+// --- Streak Types ---
+
+export interface StreakResponse {
+    current_streak: number;
+    longest_streak: number;
+    today_done: boolean;
+    total_study_days: number;
+}
+
+export interface ForecastDay {
+    date: string;
+    cards_due: number;
+}
+
+export interface ForecastResponse {
+    forecast: ForecastDay[];
+    total_due_7d: number;
+}
+
+// --- Mixed Quiz Types ---
+
+export interface MixedQuizQuestion {
+    document_id: string;
+    question_type: 'multiple_choice' | 'true_false' | 'fill_blank';
+    question: string;
+    options?: QuizOption[];
+    is_true?: boolean;
+    answer?: string;
+    topic: string;
+}
+
+export interface MixedQuizGenerateResponse {
+    questions: MixedQuizQuestion[];
+    count: number;
+}
+
+// --- Reading Types ---
+
+export interface ReadingItem {
+    document_id: string;
+    title: string;
+    vault_id: string;
+    interval_days: number;
+    next_review: string;
+    last_read_at: string | null;
+    reason: 'due' | 'low_accuracy' | 'never_read';
+}
+
+export interface ReadingListResponse {
+    items: ReadingItem[];
+    total_due: number;
+}
