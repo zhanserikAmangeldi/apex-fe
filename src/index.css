@@ -1,7 +1,6 @@
 @import "tailwindcss";
 @import "./components/TiptapEditor.css";
 
-/* Custom scrollbar for dark theme */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
 } 
@@ -20,7 +19,6 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* Toast animations */
 @keyframes slide-in-right {
   from {
     transform: translateX(100%);

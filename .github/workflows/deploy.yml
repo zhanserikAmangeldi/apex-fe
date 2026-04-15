@@ -2,7 +2,7 @@ name: Build & Deploy Frontend
 
 on:
   push:
-    branches: [master, main]
+    branches: [main]
     paths-ignore:
       - '*.md'
       - '.gitignore'
@@ -47,13 +47,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: zhanserikAmangeldi/apex-be
-          ref: master
+          ref: main
           token: ${{ secrets.DEPLOY_TOKEN }}
 
       - name: Update frontend image tag
         run: |
           IMAGE_TAG=${{ needs.build-and-push.outputs.image_tag }}
-          sed -i "s|newTag: .* # apex-frontend|newTag: ${IMAGE_TAG} # apex-frontend|" \
+          sed -i "s|newTag: .* # apex-frontend|newTag: \"${IMAGE_TAG}\" # apex-frontend|" \
             k8s/overlays/k3s-prod/kustomization.yaml
 
       - name: Commit and push
