@@ -18,7 +18,7 @@ export const DashboardPage: React.FC = () => {
     const [shareVaultId, setShareVaultId] = useState<string | null>(null);
     const [manageAccessVaultId, setManageAccessVaultId] = useState<string | null>(null);
 
-    const { vaults, loading, error, createVault } = useVaults();
+    const { vaults, loading, error, createVault, deleteVault } = useVaults();
 
     const getGradientFromColor = (hexColor: string): string => {
         const colorMap: Record<string, string> = {
@@ -157,6 +157,16 @@ export const DashboardPage: React.FC = () => {
                                     e.stopPropagation();
                                     setManageAccessVaultId(vault.id);
                                 }}
+                                onDelete={async (e) => {
+                                    e.stopPropagation();
+                                    if (confirm(`Delete "${vault.name}"? This cannot be undone.`)) {
+                                        try {
+                                            await deleteVault(vault.id);
+                                        } catch (err) {
+                                            alert('Failed to delete vault: ' + err);
+                                        }
+                                    }
+                                }}
                                 formatDate={formatDate}
                             />
                         ))}
@@ -200,8 +210,9 @@ const VaultCard: React.FC<{
     onClick: () => void;
     onShare: (e: React.MouseEvent) => void;
     onManageAccess: (e: React.MouseEvent) => void;
+    onDelete: (e: React.MouseEvent) => void;
     formatDate: (date: string) => string;
-}> = ({ vault, gradient, onClick, onShare, onManageAccess, formatDate }) => {
+}> = ({ vault, gradient, onClick, onShare, onManageAccess, onDelete, formatDate }) => {
     const isOwner = vault.user_permission === 'owner';
     const canManageAccess = isOwner || vault.user_permission === 'admin';
 
@@ -236,6 +247,17 @@ const VaultCard: React.FC<{
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                                     </svg>
                                 </button>
+                                {isOwner && (
+                                    <button
+                                        onClick={onDelete}
+                                        className="opacity-0 group-hover:opacity-100 p-2 hover:bg-red-500/20 rounded-lg transition-all"
+                                        title="Delete Vault"
+                                    >
+                                        <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                )}
                             </div>
                         </div>
                         <h3 className="text-white font-semibold text-xl mb-2 group-hover:text-purple-300 transition-colors">
@@ -267,12 +289,12 @@ const CreateVaultModal: React.FC<{
     const [form, setForm] = useState<CreateVaultRequest>({
         name: '',
         description: '',
-        icon: 'F',
+        icon: '📁',
         color: '#a855f7'
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const icons = ['F', 'D', 'P', 'W', 'N', 'A', 'B', 'C', 'S', 'T'];
+    const icons = ['📁', '📚', '💡', '🚀', '🎯', '🧠', '💻', '🔬', '🎨', '📝', '⚡', '🌍', '🎓', '📊', '🔧'];
     const colors = [
         { name: 'Purple', value: '#a855f7', gradient: 'from-purple-500 to-pink-500' },
         { name: 'Blue', value: '#3b82f6', gradient: 'from-blue-500 to-purple-500' },

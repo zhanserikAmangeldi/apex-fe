@@ -16,9 +16,6 @@ export const WebScraper: React.FC = () => {
   const [options, setOptions] = useState({
     vaultId: '',
     createDocument: true,
-    generateAiNotes: true,
-    periodic: false,
-    intervalHours: 24,
   });
 
   // Set default vault when vaults load
@@ -41,9 +38,8 @@ export const WebScraper: React.FC = () => {
         url: url,
         vault_id: options.createDocument ? options.vaultId : undefined,
         create_document: options.createDocument,
-        generate_ai_notes: options.generateAiNotes,
-        periodic: options.periodic,
-        interval_hours: options.periodic ? options.intervalHours : undefined,
+        generate_ai_notes: false,
+        periodic: false,
       };
 
       const response = await scraperApi.scrapeUrl(request);
@@ -103,42 +99,6 @@ export const WebScraper: React.FC = () => {
               </div>
             )}
 
-            <label className="flex items-center gap-3 cursor-pointer group">
-              <input
-                type="checkbox"
-                checked={options.generateAiNotes}
-                onChange={(e) => setOptions({ ...options, generateAiNotes: e.target.checked })}
-                className="w-5 h-5 rounded bg-white/10 border-white/20 text-purple-500 focus:ring-purple-500/50"
-              />
-              <span className="text-white/80 group-hover:text-white transition-colors">
-                Generate AI summary & notes
-              </span>
-            </label>
-
-            <label className="flex items-center gap-3 cursor-pointer group">
-              <input
-                type="checkbox"
-                checked={options.periodic}
-                onChange={(e) => setOptions({ ...options, periodic: e.target.checked })}
-                className="w-5 h-5 rounded bg-white/10 border-white/20 text-purple-500 focus:ring-purple-500/50"
-              />
-              <span className="text-white/80 group-hover:text-white transition-colors">
-                Periodic scraping (auto-update)
-              </span>
-            </label>
-
-            {options.periodic && (
-              <div className="ml-8 mt-2">
-                <label className="block text-white/60 text-sm mb-2">Update interval (hours)</label>
-                <input
-                  type="number"
-                  value={options.intervalHours}
-                  onChange={(e) => setOptions({ ...options, intervalHours: parseInt(e.target.value) || 24 })}
-                  min="1"
-                  className="w-32 px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-                />
-              </div>
-            )}
           </div>
 
           <GradientButton
@@ -171,13 +131,6 @@ export const WebScraper: React.FC = () => {
                 )}
               </div>
             </div>
-
-            {result.ai_summary && (
-              <div className="p-4 rounded-xl bg-purple-500/20 border border-purple-500/30">
-                <h4 className="text-purple-300 font-semibold mb-2">AI Summary</h4>
-                <p className="text-white/80 text-sm leading-relaxed">{result.ai_summary}</p>
-              </div>
-            )}
 
             {result.content_preview && (
               <div className="p-4 rounded-xl bg-blue-500/20 border border-blue-500/30">
